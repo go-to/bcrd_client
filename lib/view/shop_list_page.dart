@@ -19,6 +19,7 @@ import '../grpc_gen/egp.pb.dart' as pb;
 import '../provider/marker_provider.dart';
 import '../provider/shop_provider.dart';
 import '../service/shop_service.dart';
+import '../service/marker_cache_service.dart';
 import '../view/shop_detail_page.dart';
 import '../icon/custom_icons.dart' as custom_icon;
 
@@ -177,7 +178,7 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
     } else if (marker.isStamped) {
       zIndex = 0.0;
     }
-    final icon = await _generateCustomIcon(marker, selectedMarkerId);
+    final icon = await _generateCustomIconWithCache(marker, selectedMarkerId);
     return Marker(
       markerId: MarkerId(marker.id),
       position: marker.position,
@@ -227,6 +228,34 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
         ),
       );
     }
+  }
+
+  Future<BitmapDescriptor> _generateCustomIconWithCache(CustomMarker marker,
+      [MarkerId? selectedMarkerId]) async {
+    final cacheService = MarkerCacheService();
+
+    // キャッシュキーを生成
+    final isSelected =
+        selectedMarkerId != null && selectedMarkerId.value == marker.id;
+    final cacheKey = _generateMarkerCacheKey(marker, isSelected);
+
+    // キャッシュから取得を試行
+    final cachedIcon = cacheService.getFromCache(cacheKey);
+    if (cachedIcon != null) {
+      return cachedIcon;
+    }
+
+    // キャッシュにない場合は新規生成
+    final icon = await _generateCustomIcon(marker, selectedMarkerId);
+
+    // キャッシュに保存
+    cacheService.saveToCache(cacheKey, icon);
+
+    return icon;
+  }
+
+  String _generateMarkerCacheKey(CustomMarker marker, bool isSelected) {
+    return '${marker.id}_${marker.no}_${marker.categoryId}_${marker.inCurrentSales}_${marker.isStamped}_${marker.isIrregularHoliday}_${marker.needsReservation}_${isSelected}';
   }
 
   Future<BitmapDescriptor> _generateCustomIcon(CustomMarker marker,
@@ -408,6 +437,8 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
 
   @override
   void dispose() {
+    // キャッシュクリア（メモリリークを防ぐため）
+    MarkerCacheService().clearCache();
     _positionStream?.cancel();
     _scrollController.dispose();
     _draggableController.dispose();
