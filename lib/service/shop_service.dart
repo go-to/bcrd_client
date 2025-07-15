@@ -9,7 +9,6 @@ import 'grpc_service.dart';
 class ShopService {
   static Future<ShopsTotalResponse?> getShopsTotal(BuildContext context) async {
     // 店舗情報を取得
-    final channel = GrpcService.getChannel();
     ShopsTotalResponse? shopsTotal;
 
     try {
@@ -22,8 +21,6 @@ class ShopService {
       print('Caught error: $e');
       Util.showAlertDialog(
           context, Config.failedToGetShopInformation, Config.buttonLabelClose);
-    } finally {
-      channel.shutdown();
     }
 
     return shopsTotal;
@@ -36,7 +33,6 @@ class ShopService {
       double? latitude,
       double? longitude]) async {
     // 店舗情報を取得
-    final channel = GrpcService.getChannel();
     ShopsResponse? shops;
 
     try {
@@ -51,8 +47,6 @@ class ShopService {
       print('Caught error: $e');
       Util.showAlertDialog(
           context, Config.failedToGetShopInformation, Config.buttonLabelClose);
-    } finally {
-      channel.shutdown();
     }
 
     return shops;
@@ -61,7 +55,6 @@ class ShopService {
   static Future<ShopResponse?> getShop(
       BuildContext context, String userId, int shopId) async {
     // 店舗情報を取得
-    final channel = GrpcService.getChannel();
     ShopResponse? shop;
 
     try {
@@ -74,8 +67,6 @@ class ShopService {
       print('Caught error: $e');
       Util.showAlertDialog(
           context, Config.failedToGetShopInformation, Config.buttonLabelClose);
-    } finally {
-      channel.shutdown();
     }
 
     return shop;

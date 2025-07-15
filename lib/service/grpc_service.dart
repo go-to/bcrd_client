@@ -4,6 +4,9 @@ import 'package:grpc/grpc.dart';
 import 'package:egp_client/grpc_gen/egp.pbgrpc.dart';
 
 class GrpcService {
+  static ClientChannel? _channel;
+  static EgpServiceClient? _client;
+
   static CallOptions getCallOptions() {
     return CallOptions(metadata: {
       'api-key': dotenv.get('API_KEY'),
@@ -11,17 +14,28 @@ class GrpcService {
   }
 
   static ClientChannel getChannel() {
-    return ClientChannel(
+    _channel ??= ClientChannel(
       dotenv.get('GRPC_SERVER_HOST'),
       port: int.parse(dotenv.get('GRPC_SERVER_PORT')),
       // default: secure()
       options: const ChannelOptions(credentials: ChannelCredentials.insecure()),
     );
+    return _channel!;
+  }
+
+  static EgpServiceClient getClient() {
+    _client ??= EgpServiceClient(getChannel());
+    return _client!;
+  }
+
+  static Future<void> shutdown() async {
+    await _channel?.shutdown();
+    _channel = null;
+    _client = null;
   }
 
   static Future<ShopsTotalResponse> getShopsTotal() async {
-    final channel = getChannel();
-    final client = EgpServiceClient(channel);
+    final client = getClient();
 
     final res = await client.getShopsTotal(
       ShopsTotalRequest(),
@@ -36,8 +50,7 @@ class GrpcService {
       int? sortOrder,
       double? latitude,
       double? longitude]) async {
-    final channel = getChannel();
-    final client = EgpServiceClient(channel);
+    final client = getClient();
     List<SearchType> searchTypes = [];
     SortOrderType sortOrderType = SortOrderType.SORT_ORDER_NO;
 
@@ -70,8 +83,7 @@ class GrpcService {
   }
 
   static Future<ShopResponse> getShop(String userId, int shopId) async {
-    final channel = getChannel();
-    final client = EgpServiceClient(channel);
+    final client = getClient();
 
     final res = await client.getShop(
       ShopRequest(userId: userId, shopId: Int64(shopId)),
@@ -81,8 +93,7 @@ class GrpcService {
   }
 
   static Future<StampResponse> addStamp(String userId, int shopId) async {
-    final channel = getChannel();
-    final client = EgpServiceClient(channel);
+    final client = getClient();
 
     final res = await client.addStamp(
       StampRequest(userId: userId, shopId: Int64(shopId)),
@@ -92,8 +103,7 @@ class GrpcService {
   }
 
   static Future<StampResponse> deleteStamp(String userId, int shopId) async {
-    final channel = getChannel();
-    final client = EgpServiceClient(channel);
+    final client = getClient();
 
     final res = await client.deleteStamp(
       StampRequest(userId: userId, shopId: Int64(shopId)),

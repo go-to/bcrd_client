@@ -9,7 +9,6 @@ import 'grpc_service.dart';
 class StampService {
   static Future<StampResponse?> addStamp(
       BuildContext context, String userId, int shopId) async {
-    final channel = GrpcService.getChannel();
     StampResponse? stamp;
 
     try {
@@ -20,8 +19,6 @@ class StampService {
     } catch (e) {
       print('Caught error: $e');
       Util.showAlertDialog(context, 'スタンプ獲得に失敗しました', Config.buttonLabelClose);
-    } finally {
-      channel.shutdown();
     }
 
     return stamp;
@@ -29,7 +26,6 @@ class StampService {
 
   static Future<StampResponse?> deleteStamp(
       BuildContext context, String userId, int shopId) async {
-    final channel = GrpcService.getChannel();
     StampResponse? stamp;
 
     try {
@@ -40,8 +36,6 @@ class StampService {
     } catch (e) {
       print('Caught error: $e');
       Util.showAlertDialog(context, 'スタンプ取り消しに失敗しました', Config.buttonLabelClose);
-    } finally {
-      channel.shutdown();
     }
 
     return stamp;

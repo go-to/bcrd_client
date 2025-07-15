@@ -1569,10 +1569,14 @@ class ShopRequest extends $pb.GeneratedMessage {
 class ShopResponse extends $pb.GeneratedMessage {
   factory ShopResponse({
     Shop? shop,
+    $core.bool? isEventPeriod,
   }) {
     final $result = create();
     if (shop != null) {
       $result.shop = shop;
+    }
+    if (isEventPeriod != null) {
+      $result.isEventPeriod = isEventPeriod;
     }
     return $result;
   }
@@ -1582,6 +1586,7 @@ class ShopResponse extends $pb.GeneratedMessage {
 
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'ShopResponse', package: const $pb.PackageName(_omitMessageNames ? '' : 'egp'), createEmptyInstance: create)
     ..aOM<Shop>(1, _omitFieldNames ? '' : 'shop', subBuilder: Shop.create)
+    ..aOB(2, _omitFieldNames ? '' : 'isEventPeriod')
     ..hasRequiredFields = false
   ;
 
@@ -1616,6 +1621,15 @@ class ShopResponse extends $pb.GeneratedMessage {
   void clearShop() => clearField(1);
   @$pb.TagNumber(1)
   Shop ensureShop() => $_ensure(0);
+
+  @$pb.TagNumber(2)
+  $core.bool get isEventPeriod => $_getBF(1);
+  @$pb.TagNumber(2)
+  set isEventPeriod($core.bool v) { $_setBool(1, v); }
+  @$pb.TagNumber(2)
+  $core.bool hasIsEventPeriod() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearIsEventPeriod() => clearField(2);
 }
 
 class StampRequest extends $pb.GeneratedMessage {
@@ -1730,6 +1744,120 @@ class StampResponse extends $pb.GeneratedMessage {
   $core.bool hasNumberOfTimes() => $_has(0);
   @$pb.TagNumber(1)
   void clearNumberOfTimes() => clearField(1);
+}
+
+class MergeUserStampRequest extends $pb.GeneratedMessage {
+  factory MergeUserStampRequest({
+    $core.String? userId,
+    $core.String? anonymousUserId,
+  }) {
+    final $result = create();
+    if (userId != null) {
+      $result.userId = userId;
+    }
+    if (anonymousUserId != null) {
+      $result.anonymousUserId = anonymousUserId;
+    }
+    return $result;
+  }
+  MergeUserStampRequest._() : super();
+  factory MergeUserStampRequest.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
+  factory MergeUserStampRequest.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'MergeUserStampRequest', package: const $pb.PackageName(_omitMessageNames ? '' : 'egp'), createEmptyInstance: create)
+    ..aOS(1, _omitFieldNames ? '' : 'userId')
+    ..aOS(2, _omitFieldNames ? '' : 'anonymousUserId')
+    ..hasRequiredFields = false
+  ;
+
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
+  'Will be removed in next major version')
+  MergeUserStampRequest clone() => MergeUserStampRequest()..mergeFromMessage(this);
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
+  'Will be removed in next major version')
+  MergeUserStampRequest copyWith(void Function(MergeUserStampRequest) updates) => super.copyWith((message) => updates(message as MergeUserStampRequest)) as MergeUserStampRequest;
+
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static MergeUserStampRequest create() => MergeUserStampRequest._();
+  MergeUserStampRequest createEmptyInstance() => create();
+  static $pb.PbList<MergeUserStampRequest> createRepeated() => $pb.PbList<MergeUserStampRequest>();
+  @$core.pragma('dart2js:noInline')
+  static MergeUserStampRequest getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<MergeUserStampRequest>(create);
+  static MergeUserStampRequest? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get userId => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set userId($core.String v) { $_setString(0, v); }
+  @$pb.TagNumber(1)
+  $core.bool hasUserId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearUserId() => clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get anonymousUserId => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set anonymousUserId($core.String v) { $_setString(1, v); }
+  @$pb.TagNumber(2)
+  $core.bool hasAnonymousUserId() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearAnonymousUserId() => clearField(2);
+}
+
+class MergeUserStampResponse extends $pb.GeneratedMessage {
+  factory MergeUserStampResponse({
+    $core.int? stampNum,
+  }) {
+    final $result = create();
+    if (stampNum != null) {
+      $result.stampNum = stampNum;
+    }
+    return $result;
+  }
+  MergeUserStampResponse._() : super();
+  factory MergeUserStampResponse.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
+  factory MergeUserStampResponse.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'MergeUserStampResponse', package: const $pb.PackageName(_omitMessageNames ? '' : 'egp'), createEmptyInstance: create)
+    ..a<$core.int>(1, _omitFieldNames ? '' : 'stampNum', $pb.PbFieldType.O3)
+    ..hasRequiredFields = false
+  ;
+
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
+  'Will be removed in next major version')
+  MergeUserStampResponse clone() => MergeUserStampResponse()..mergeFromMessage(this);
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
+  'Will be removed in next major version')
+  MergeUserStampResponse copyWith(void Function(MergeUserStampResponse) updates) => super.copyWith((message) => updates(message as MergeUserStampResponse)) as MergeUserStampResponse;
+
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static MergeUserStampResponse create() => MergeUserStampResponse._();
+  MergeUserStampResponse createEmptyInstance() => create();
+  static $pb.PbList<MergeUserStampResponse> createRepeated() => $pb.PbList<MergeUserStampResponse>();
+  @$core.pragma('dart2js:noInline')
+  static MergeUserStampResponse getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<MergeUserStampResponse>(create);
+  static MergeUserStampResponse? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.int get stampNum => $_getIZ(0);
+  @$pb.TagNumber(1)
+  set stampNum($core.int v) { $_setSignedInt32(0, v); }
+  @$pb.TagNumber(1)
+  $core.bool hasStampNum() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearStampNum() => clearField(1);
 }
 
 
