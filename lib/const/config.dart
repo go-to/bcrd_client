@@ -13,7 +13,8 @@ class Config {
   static const double defaultMapLatitude = 35.64691938518296;
   static const double defaultMapLongitude = 139.71008179999998;
   static const double defaultMapZoom = 17;
-  static const int locationDistanceFilter = 100;
+  static const int locationDistanceFilter = 50;
+  static const int locationUpdateIntervalMs = 30000; // 30秒間隔
   static const String googleMapStyleJsonPath =
       'assets/jsons/google_map_style.json';
   static const String shopDefaultImagePath = 'assets/images/shop_default.png';

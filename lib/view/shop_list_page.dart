@@ -72,14 +72,17 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
   final _markerQueue = Queue<CustomMarker>();
   bool _isUpdating = false;
   int shopsTotalNum = 0;
+  DateTime? _lastLocationUpdate;
+  Timer? _locationUpdateTimer;
 
   final _pageController = PageController(
     viewportFraction: 0.85,
   );
 
   final LocationSettings locationSettings = const LocationSettings(
-    accuracy: LocationAccuracy.high,
+    accuracy: LocationAccuracy.medium,
     distanceFilter: Config.locationDistanceFilter,
+    timeLimit: Duration(seconds: 10),
   );
 
   // 初期位置
@@ -440,6 +443,7 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
     // キャッシュクリア（メモリリークを防ぐため）
     MarkerCacheService().clearCache();
     _positionStream?.cancel();
+    _locationUpdateTimer?.cancel();
     _scrollController.dispose();
     _draggableController.dispose();
     _pageController.dispose();
@@ -461,15 +465,28 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
           Geolocator.getPositionStream(locationSettings: locationSettings)
               .listen(
         (Position position) {
-          // カメラを現在地に移動
-          if (!_mapCreated) {
-            CircularProgressIndicator();
-          } else {
+          // 現在地を保存
+          currentPosition = position;
+
+          // カメラを現在地に移動（実際の位置を使用）
+          if (_mapCreated) {
             _mapController.animateCamera(
-              CameraUpdate.newLatLng(_kGooglePlex.target),
+              CameraUpdate.newLatLng(
+                LatLng(position.latitude, position.longitude),
+              ),
             );
           }
-          setState(() {});
+
+          // 位置情報更新の間隔制御
+          final now = DateTime.now();
+          if (_lastLocationUpdate == null ||
+              now.difference(_lastLocationUpdate!).inMilliseconds >=
+                  Config.locationUpdateIntervalMs) {
+            _lastLocationUpdate = now;
+
+            // 位置情報が更新されたらマーカーを更新
+            _searchShops(false);
+          }
         },
         onError: (e) {
           print(Util.sprintf(
