@@ -82,7 +82,6 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
   final LocationSettings locationSettings = const LocationSettings(
     accuracy: LocationAccuracy.medium,
     distanceFilter: Config.locationDistanceFilter,
-    timeLimit: Duration(seconds: 10),
   );
 
   // 初期位置
