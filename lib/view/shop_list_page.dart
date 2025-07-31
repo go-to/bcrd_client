@@ -408,11 +408,11 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
 
   @override
   void dispose() {
-    _positionStream?.cancel();
     _scrollController.dispose();
     _draggableController.dispose();
     _pageController.dispose();
     _mapController.dispose();
+    _positionStream?.cancel();
     super.dispose();
   }
 
