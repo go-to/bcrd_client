@@ -105,11 +105,13 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
 
     // 非同期処理は別途実行
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
+      _safeProviderUpdate(() {
+        ref.read(searchConditionProvider.notifier).resetSearchCondition();
+        ref.read(searchKeywordProvider.notifier).resetSearchKeyword();
         _startPositionStream();
         _setShopsTotal();
         _initializeMarkers();
-      }
+      });
     });
   }
 
