@@ -284,8 +284,7 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
     }
 
     // 背景の円を描画
-    final bgPaint = Paint()
-      ..color = Color(0xFFF3EEDA).withAlpha(200);
+    final bgPaint = Paint()..color = Color(0xFFF3EEDA).withAlpha(200);
     canvas.drawCircle(Offset(size / 2, size / 2), size / 2, bgPaint);
 
     // アセットから画像を読み込み
@@ -305,8 +304,7 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
         ..color = Color(0xFFF3EEDA).withAlpha(200).withAlpha(255);
       canvas.drawCircle(Offset(size / 2, size / 2), size / 2, bgPaint2);
     } else if (!marker.inCurrentSales) {
-      final bgPaint3 = Paint()
-        ..color = Colors.black.withAlpha(150);
+      final bgPaint3 = Paint()..color = Colors.black.withAlpha(150);
       canvas.drawCircle(Offset(size / 2, size / 2), size / 2, bgPaint3);
     }
 
@@ -315,14 +313,14 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
       final ByteData isStampedData = await rootBundle.load(isStampedIconPath);
       final Uint8List isStampedBytes = isStampedData.buffer.asUint8List();
       final ui.Codec isStampedCodec =
-      await ui.instantiateImageCodec(isStampedBytes);
+          await ui.instantiateImageCodec(isStampedBytes);
       final ui.FrameInfo isStampedFi = await isStampedCodec.getNextFrame();
       final ui.Image isStampedImage = isStampedFi.image;
 
       final imageSize = size;
       final imageOffset = Offset(0, 0);
       final imageRect =
-      Rect.fromLTWH(imageOffset.dx, imageOffset.dy, imageSize, imageSize);
+          Rect.fromLTWH(imageOffset.dx, imageOffset.dy, imageSize, imageSize);
       canvas.drawImageRect(
           isStampedImage,
           Rect.fromLTWH(0, 0, isStampedImage.width.toDouble(),
@@ -439,8 +437,8 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
       updateCallback();
     }, (error, stackTrace) {
       final errorMessage = error.toString();
-      if (errorMessage.contains(
-          '_lifecycleState != _ElementLifecycle.defunct') ||
+      if (errorMessage
+              .contains('_lifecycleState != _ElementLifecycle.defunct') ||
           errorMessage.contains('markNeedsBuild') ||
           errorMessage.contains('ConsumerStatefulElement') ||
           errorMessage.contains('disposed') ||
@@ -467,26 +465,24 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
       _positionStream =
           Geolocator.getPositionStream(locationSettings: locationSettings)
               .listen(
-                (Position position) {
-              // カメラを現在地に移動
-              if (!_mapCreated) {
-                CircularProgressIndicator();
-              } else {
-                _mapController.animateCamera(
-                  CameraUpdate.newLatLng(_kGooglePlex.target),
-                );
-              }
-              setState(() {});
-            },
-            onError: (e) {
-              print(Util.sprintf(
-                  Config.errorDetail,
-                  [Config.failedToGetLocationInformation, e]));
-              Util.showAlertDialog(
-                  context, Config.failedToGetLocationInformation,
-                  Config.buttonLabelClose);
-            },
-          );
+        (Position position) {
+          // カメラを現在地に移動
+          if (!_mapCreated) {
+            CircularProgressIndicator();
+          } else {
+            _mapController.animateCamera(
+              CameraUpdate.newLatLng(_kGooglePlex.target),
+            );
+          }
+          setState(() {});
+        },
+        onError: (e) {
+          print(Util.sprintf(
+              Config.errorDetail, [Config.failedToGetLocationInformation, e]));
+          Util.showAlertDialog(context, Config.failedToGetLocationInformation,
+              Config.buttonLabelClose);
+        },
+      );
     }
   }
 
@@ -501,10 +497,10 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
       [bool? needsBottomSheetScrollPosition = true]) async {
     // 検索条件を取得
     final searchCondition =
-    ref.read(searchConditionProvider.notifier).getSearchCondition();
+        ref.read(searchConditionProvider.notifier).getSearchCondition();
     // 検索キーワードを取得
     final searchKeyword =
-    ref.read(searchKeywordProvider.notifier).getSearchKeyword();
+        ref.read(searchKeywordProvider.notifier).getSearchKeyword();
     // ソート順
     final sortOrder = ref.read(sortOrderProvider.notifier).getSortOrder();
     // 緯度・経度
@@ -524,7 +520,7 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
       // マーカー情報を更新
       Future.sync(() => _setCustomMarkers(shops));
       final selectedMarkerId =
-      ref.read(selectedMarkerProvider.notifier).getSelectedMarker();
+          ref.read(selectedMarkerProvider.notifier).getSelectedMarker();
       _createCustomMarkers(selectedMarkerId);
     }
     // マーカーの選択状態を解除
@@ -565,9 +561,7 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
     final shopListAsync = ref.watch(shopProvider(context));
 
     // 現在のテーマからカラースキームを取得
-    final colorScheme = Theme
-        .of(context)
-        .colorScheme;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return PopScope(
       canPop: false,
@@ -592,9 +586,7 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                       onMapCreated: (GoogleMapController controller) async {
                         final googleMapStyle = await rootBundle
                             .loadString(Config.googleMapStyleJsonPath);
-                        if (Theme
-                            .of(context)
-                            .brightness == Brightness.dark) {
+                        if (Theme.of(context).brightness == Brightness.dark) {
                           await controller.setMapStyle(googleMapStyle);
                         }
                         _mapController = controller;
@@ -619,7 +611,7 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                   child: ElevatedButton(
                     onPressed: () async {
                       final permissionGranted =
-                      await _checkLocationPermission();
+                          await _checkLocationPermission();
 
                       // 権限が許可された場合にGoogleMapを再ビルド
                       if (permissionGranted) {
@@ -634,11 +626,10 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
               }
             },
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (Object error, StackTrace stackTrace) =>
-                Center(
-                  child:
+            error: (Object error, StackTrace stackTrace) => Center(
+              child:
                   Text(Util.sprintf(Config.errorDetail, [Config.error, error])),
-                ),
+            ),
           ),
 
           // 検索条件
@@ -769,7 +760,7 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                       runSpacing: 0.0,
                       children: [
                         for (final MapEntry(:key, :value)
-                        in searchItemList.entries) ...{
+                            in searchItemList.entries) ...{
                           _buildSearchTypeButton(
                             context,
                             ref,
@@ -786,11 +777,10 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
               );
             },
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (Object error, StackTrace stackTrace) =>
-                Center(
-                  child:
+            error: (Object error, StackTrace stackTrace) => Center(
+              child:
                   Text(Util.sprintf(Config.errorDetail, [Config.error, error])),
-                ),
+            ),
           ),
 
           // カード表示
@@ -844,12 +834,12 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                         Config.shopCardAttributeMenu: shop.menuName,
                         Config.shopCardAttributeAddress: shop.address,
                         Config.shopCardAttributeBusinessHours:
-                        shop.businessHours,
+                            shop.businessHours,
                       };
                       return GestureDetector(
                           onTap: () async {
                             final result =
-                            await Navigator.of(context).push<bool>(
+                                await Navigator.of(context).push<bool>(
                               MaterialPageRoute(builder: (context) {
                                 final shop = shops.shops.elementAt(index);
                                 return ShopDetailPage(
@@ -894,7 +884,7 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                                         ),
                                         child: ClipRRect(
                                           borderRadius:
-                                          BorderRadius.circular(8),
+                                              BorderRadius.circular(8),
                                           child: Image.network(
                                             shop.menuImageUrl,
                                             fit: BoxFit.contain,
@@ -905,14 +895,14 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                                               }
                                               return Center(
                                                 child:
-                                                CircularProgressIndicator(
+                                                    CircularProgressIndicator(
                                                   value: loadingProgress
-                                                      .expectedTotalBytes !=
-                                                      null
+                                                              .expectedTotalBytes !=
+                                                          null
                                                       ? loadingProgress
-                                                      .cumulativeBytesLoaded /
-                                                      loadingProgress
-                                                          .expectedTotalBytes!
+                                                              .cumulativeBytesLoaded /
+                                                          loadingProgress
+                                                              .expectedTotalBytes!
                                                       : null,
                                                 ),
                                               );
@@ -931,12 +921,12 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                                         padding: EdgeInsets.all(8),
                                         child: Column(
                                           crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                                              CrossAxisAlignment.start,
                                           children:
-                                          attributes.entries.map((entry) {
+                                              attributes.entries.map((entry) {
                                             return Padding(
                                               padding:
-                                              EdgeInsets.only(bottom: 4),
+                                                  EdgeInsets.only(bottom: 4),
                                               child: Text(
                                                 '${entry.key}: ${entry.value}',
                                                 style: TextStyle(
@@ -961,23 +951,22 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
               }
             },
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (Object error, StackTrace stackTrace) =>
-                Center(
-                  child:
+            error: (Object error, StackTrace stackTrace) => Center(
+              child:
                   Text(Util.sprintf(Config.errorDetail, [Config.error, error])),
-                ),
+            ),
           ),
 
           // 現在地ボタン
           _locationPermissionGranted
               ? Positioned(
-            right: Config.currentPositionButtonPositionRight,
-            bottom: Config.currentPositionButtonPositionBottom +
-                (selectedMarkerId != null
-                    ? Config.buttonMarginBottomWhenCardOpen
-                    : Config.buttonMarginBottomNormal),
-            child: _goToCurrentPositionButton(context),
-          )
+                  right: Config.currentPositionButtonPositionRight,
+                  bottom: Config.currentPositionButtonPositionBottom +
+                      (selectedMarkerId != null
+                          ? Config.buttonMarginBottomWhenCardOpen
+                          : Config.buttonMarginBottomNormal),
+                  child: _goToCurrentPositionButton(context),
+                )
               : Container(),
 
           // ボトムシート
@@ -986,16 +975,11 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
               if (_locationPermissionGranted) {
                 final sortOrder = ref.watch(sortOrderProvider);
                 final sortOrderList =
-                ref.read(sortOrderProvider.notifier).getSortOrderList();
+                    ref.read(sortOrderProvider.notifier).getSortOrderList();
                 // 画面の高さに応じてスクロール可能な最大位置を決める
                 double maxChildSize = Config.bottomSheetMaxSize;
-                final screenHeight = MediaQuery
-                    .of(context)
-                    .size
-                    .height;
-                final safePadding = MediaQuery
-                    .of(context)
-                    .padding;
+                final screenHeight = MediaQuery.of(context).size.height;
+                final safePadding = MediaQuery.of(context).padding;
                 final screenSize =
                     screenHeight - safePadding.top - safePadding.bottom;
                 if (screenSize <
@@ -1019,7 +1003,7 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                       decoration: BoxDecoration(
                         color: colorScheme.surface,
                         borderRadius:
-                        BorderRadius.vertical(top: Radius.circular(48)),
+                            BorderRadius.vertical(top: Radius.circular(48)),
                       ),
                       child: Column(
                         children: [
@@ -1053,8 +1037,8 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                           ),
                           Container(
                             height: _draggableController.isAttached &&
-                                _draggableController.size >=
-                                    Config.bottomSheetMinSize * 2.5
+                                    _draggableController.size >=
+                                        Config.bottomSheetMinSize * 2.5
                                 ? 60
                                 : 0,
                             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -1073,376 +1057,366 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                                 const SizedBox(width: 12),
                                 Expanded(
                                     child: DropdownButton<int>(
-                                      isExpanded: true,
-                                      value: sortOrder,
-                                      items: sortOrderList.entries.map((entry) {
-                                        return DropdownMenuItem<int>(
-                                          value: entry.key,
-                                          child: Text(entry.value),
-                                        );
-                                      }).toList(),
-                                      onChanged: (value) {
-                                        if (value != null) {
-                                          // ソート順を設定
-                                          _safeProviderUpdate(() {
-                                            ref
-                                                .read(
-                                                sortOrderProvider.notifier)
-                                                .setSortOrder(value);
-                                          });
-                                          // 店舗情報を取得
-                                          if (mounted) {
-                                            _searchShops();
-                                          }
-                                          // スクロール位置をリセット
-                                          // scrollController.jumpTo(0);
-                                        }
-                                      },
-                                    )),
+                                  isExpanded: true,
+                                  value: sortOrder,
+                                  items: sortOrderList.entries.map((entry) {
+                                    return DropdownMenuItem<int>(
+                                      value: entry.key,
+                                      child: Text(entry.value),
+                                    );
+                                  }).toList(),
+                                  onChanged: (value) {
+                                    if (value != null) {
+                                      // ソート順を設定
+                                      _safeProviderUpdate(() {
+                                        ref
+                                            .read(sortOrderProvider.notifier)
+                                            .setSortOrder(value);
+                                      });
+                                      // 店舗情報を取得
+                                      if (mounted) {
+                                        _searchShops();
+                                      }
+                                      // スクロール位置をリセット
+                                      // scrollController.jumpTo(0);
+                                    }
+                                  },
+                                )),
                               ],
                             ),
                           ),
                           shops!.shops.isNotEmpty
                               ? Expanded(
-                            child: ListView.separated(
-                                controller: _scrollController,
-                                itemCount: shops.shops.length,
-                                separatorBuilder: (context, index) =>
-                                    Divider(
-                                      height: 1,
-                                      color: colorScheme.primary
-                                          .withValues(alpha: 0.4),
-                                    ),
-                                itemBuilder: (context, index) {
-                                  final shop =
-                                  shops.shops.elementAt(index);
-                                  final attributes = {
-                                    Config.shopCardAttributeMenu:
-                                    shop.menuName,
-                                    Config.shopCardAttributeAddress:
-                                    shop.address,
-                                    Config.shopCardAttributeBusinessHours:
-                                    shop.businessHours,
-                                  };
-                                  return GestureDetector(
-                                    onTap: () async {
-                                      await Navigator.of(context)
-                                          .push<bool>(
-                                        MaterialPageRoute(
-                                            builder: (context) {
-                                              final shop = shops.shops
-                                                  .elementAt(index);
-                                              return ShopDetailPage(
-                                                  year: shop.year,
-                                                  no: shop.no,
-                                                  shopId: shop.id.toInt(),
-                                                  shopName: shop.shopName,
-                                                  address: shop.address);
-                                            }),
-                                      ).then((onValue) async {
-                                        // 遷移先ページから戻ってきたあとの処理
-                                        // 店舗情報を取得
-                                        _searchShops(false);
-                                      });
-                                    },
-                                    child: Container(
-                                      height: 180,
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 8),
-                                      child: Row(
-                                        crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                        children: [
-                                          Column(
-                                            mainAxisAlignment:
-                                            MainAxisAlignment.start,
-                                            crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                            children: [
-                                              const SizedBox(height: 20),
-                                              Stack(
-                                                children: [
-                                                  ClipRRect(
-                                                    borderRadius:
-                                                    BorderRadius
-                                                        .circular(8),
-                                                    child: Image.network(
-                                                      shop.menuImageUrl,
-                                                      fit: BoxFit.cover,
-                                                      height: 140,
-                                                      width: 160,
-                                                      loadingBuilder:
-                                                          (context, child,
-                                                          loadingProgress) {
-                                                        if (loadingProgress ==
-                                                            null) {
-                                                          return child;
-                                                        }
-                                                        return Center(
-                                                          child:
-                                                          CircularProgressIndicator(
-                                                            value: loadingProgress
-                                                                .expectedTotalBytes !=
-                                                                null
-                                                                ? loadingProgress
-                                                                .cumulativeBytesLoaded /
-                                                                loadingProgress
-                                                                    .expectedTotalBytes!
-                                                                : null,
-                                                          ),
-                                                        );
-                                                      },
-                                                      errorBuilder:
-                                                          (context, error,
-                                                          stackTrace) {
-                                                        return Icon(
-                                                            Icons.error);
-                                                      },
-                                                    ),
-                                                  ),
-                                                  // スタンプ押下済み
-                                                  if (shop.isStamped)
-                                                    Container(
-                                                      height: 140,
-                                                      width: 160,
-                                                      color: Colors.black
-                                                          .withValues(
-                                                          alpha: 0.5),
-                                                    ),
-                                                  if (shop.isStamped)
-                                                    Positioned(
-                                                      child:
-                                                      Transform.scale(
-                                                        scale: 1.2,
-                                                        child: Image.asset(
-                                                            Config
-                                                                .isStampedSelectedImagePath,
-                                                            width: 150,
-                                                            height: 150),
-                                                      ),
-                                                    ),
-                                                  // 距離
-                                                  Positioned(
-                                                    top: 8,
-                                                    right: 8,
-                                                    child: Align(
-                                                      alignment: Alignment
-                                                          .center,
-                                                      child: Container(
-                                                        padding:
-                                                        const EdgeInsets
-                                                            .symmetric(
-                                                            horizontal:
-                                                            10,
-                                                            vertical:
-                                                            2),
-                                                        decoration:
-                                                        BoxDecoration(
-                                                          color: colorScheme
-                                                              .surface
-                                                              .withValues(
-                                                              alpha:
-                                                              0.9),
+                                  child: ListView.separated(
+                                      controller: _scrollController,
+                                      itemCount: shops.shops.length,
+                                      separatorBuilder: (context, index) =>
+                                          Divider(
+                                            height: 1,
+                                            color: colorScheme.primary
+                                                .withValues(alpha: 0.4),
+                                          ),
+                                      itemBuilder: (context, index) {
+                                        final shop =
+                                            shops.shops.elementAt(index);
+                                        final attributes = {
+                                          Config.shopCardAttributeMenu:
+                                              shop.menuName,
+                                          Config.shopCardAttributeAddress:
+                                              shop.address,
+                                          Config.shopCardAttributeBusinessHours:
+                                              shop.businessHours,
+                                        };
+                                        return GestureDetector(
+                                          onTap: () async {
+                                            await Navigator.of(context)
+                                                .push<bool>(
+                                              MaterialPageRoute(
+                                                  builder: (context) {
+                                                final shop = shops.shops
+                                                    .elementAt(index);
+                                                return ShopDetailPage(
+                                                    year: shop.year,
+                                                    no: shop.no,
+                                                    shopId: shop.id.toInt(),
+                                                    shopName: shop.shopName,
+                                                    address: shop.address);
+                                              }),
+                                            ).then((onValue) async {
+                                              // 遷移先ページから戻ってきたあとの処理
+                                              // 店舗情報を取得
+                                              _searchShops(false);
+                                            });
+                                          },
+                                          child: Container(
+                                            height: 180,
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 8),
+                                            child: Row(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Column(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.start,
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    const SizedBox(height: 20),
+                                                    Stack(
+                                                      children: [
+                                                        ClipRRect(
                                                           borderRadius:
-                                                          BorderRadius
-                                                              .circular(
-                                                              8),
-                                                        ),
-                                                        child: Text(
-                                                          shop.distance,
-                                                          style:
-                                                          TextStyle(
-                                                            color: colorScheme
-                                                                .primary,
-                                                            fontSize: Config
-                                                                .fontSizeNormal,
-                                                            fontWeight:
-                                                            FontWeight
-                                                                .bold,
+                                                              BorderRadius
+                                                                  .circular(8),
+                                                          child: Image.network(
+                                                            shop.menuImageUrl,
+                                                            fit: BoxFit.cover,
+                                                            height: 140,
+                                                            width: 160,
+                                                            loadingBuilder:
+                                                                (context, child,
+                                                                    loadingProgress) {
+                                                              if (loadingProgress ==
+                                                                  null) {
+                                                                return child;
+                                                              }
+                                                              return Center(
+                                                                child:
+                                                                    CircularProgressIndicator(
+                                                                  value: loadingProgress
+                                                                              .expectedTotalBytes !=
+                                                                          null
+                                                                      ? loadingProgress
+                                                                              .cumulativeBytesLoaded /
+                                                                          loadingProgress
+                                                                              .expectedTotalBytes!
+                                                                      : null,
+                                                                ),
+                                                              );
+                                                            },
+                                                            errorBuilder:
+                                                                (context, error,
+                                                                    stackTrace) {
+                                                              return Icon(
+                                                                  Icons.error);
+                                                            },
                                                           ),
                                                         ),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  // 選択
-                                                  Positioned(
-                                                    top: 8,
-                                                    left: 6,
-                                                    child:
-                                                    GestureDetector(
-                                                      onTap: () {
-                                                        // 選択したマーカーIDを取得
-                                                        final markerId =
-                                                        MarkerId(shop
-                                                            .id
-                                                            .toString());
-                                                        // 直前に選択していたマーカーIDを取得
-                                                        final prevSelectedMarkerId = ref
-                                                            .read(
-                                                            selectedMarkerProvider
-                                                                .notifier)
-                                                            .getSelectedMarker();
-                                                        // カメラ位置を移動するかを判定するための変数
-                                                        bool
-                                                        needsUpdateAnimateCamera =
-                                                        false;
-
-                                                        // 初回選択時
-                                                        if (prevSelectedMarkerId ==
-                                                            null) {
-                                                          // 選択中のマーカーに該当するIndexを取得
-                                                          final selectedIndex = _markers
-                                                              .values
-                                                              .toList()
-                                                              .indexWhere((m) =>
-                                                          m.markerId ==
-                                                              markerId);
-                                                          // 初回に先頭のIndexを選択した場合、PageControllerの変更を検知できないので、カメラ位置を移動する処理を明示的に実行する
-                                                          if (selectedIndex ==
-                                                              0) {
-                                                            needsUpdateAnimateCamera =
-                                                            true;
-                                                          }
-                                                        }
-                                                        // 新たに選択したマーカーIDと直前に選択していたマーカーIDが同じ場合も同上
-                                                        else if (markerId ==
-                                                            prevSelectedMarkerId) {
-                                                          needsUpdateAnimateCamera =
-                                                          true;
-                                                        }
-
-                                                        // ボトムシートの高さを初期状態に戻す
-                                                        _resetBottomSheet();
-                                                        ref
-                                                            .read(
-                                                            selectedMarkerProvider
-                                                                .notifier)
-                                                            .selectMarker(
-                                                            markerId);
-                                                        _createCustomMarkers(
-                                                            markerId);
-
-                                                        if (needsUpdateAnimateCamera) {
-                                                          // スワイプ後のお店の座標までカメラを移動
-                                                          _mapController
-                                                              .animateCamera(
-                                                              CameraUpdate
-                                                                  .newLatLng(
-                                                                  LatLng(
-                                                                      shop
-                                                                          .latitude,
-                                                                      shop
-                                                                          .longitude)));
-                                                        }
-                                                      },
-                                                      child: Align(
-                                                        alignment:
-                                                        Alignment
-                                                            .center,
-                                                        child: Container(
-                                                          padding: const EdgeInsets
-                                                              .symmetric(
-                                                              horizontal:
-                                                              16,
-                                                              vertical:
-                                                              4),
-                                                          decoration:
-                                                          BoxDecoration(
-                                                            color: Colors
-                                                                .amberAccent,
-                                                            borderRadius:
-                                                            BorderRadius
-                                                                .circular(
-                                                                8),
+                                                        // スタンプ押下済み
+                                                        if (shop.isStamped)
+                                                          Container(
+                                                            height: 140,
+                                                            width: 160,
+                                                            color: Colors.black
+                                                                .withValues(
+                                                                    alpha: 0.5),
                                                           ),
-                                                          child: Text(
-                                                            Config
-                                                                .selectCard,
-                                                            style:
-                                                            TextStyle(
-                                                              color: Colors
-                                                                  .black,
-                                                              fontSize: Config
-                                                                  .fontSizeSmall,
-                                                              fontWeight:
-                                                              FontWeight
-                                                                  .bold,
+                                                        if (shop.isStamped)
+                                                          Positioned(
+                                                            child:
+                                                                Transform.scale(
+                                                              scale: 1.2,
+                                                              child: Image.asset(
+                                                                  Config
+                                                                      .isStampedSelectedImagePath,
+                                                                  width: 150,
+                                                                  height: 150),
+                                                            ),
+                                                          ),
+                                                        // 距離
+                                                        Positioned(
+                                                          top: 8,
+                                                          right: 8,
+                                                          child: Align(
+                                                            alignment: Alignment
+                                                                .center,
+                                                            child: Container(
+                                                              padding:
+                                                                  const EdgeInsets
+                                                                      .symmetric(
+                                                                      horizontal:
+                                                                          10,
+                                                                      vertical:
+                                                                          2),
+                                                              decoration:
+                                                                  BoxDecoration(
+                                                                color: colorScheme
+                                                                    .surface
+                                                                    .withValues(
+                                                                        alpha:
+                                                                            0.9),
+                                                                borderRadius:
+                                                                    BorderRadius
+                                                                        .circular(
+                                                                            8),
+                                                              ),
+                                                              child: Text(
+                                                                shop.distance,
+                                                                style:
+                                                                    TextStyle(
+                                                                  color: colorScheme
+                                                                      .primary,
+                                                                  fontSize: Config
+                                                                      .fontSizeNormal,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold,
+                                                                ),
+                                                              ),
                                                             ),
                                                           ),
                                                         ),
-                                                      ),
+                                                        // 選択
+                                                        Positioned(
+                                                          top: 8,
+                                                          left: 6,
+                                                          child:
+                                                              GestureDetector(
+                                                            onTap: () {
+                                                              // 選択したマーカーIDを取得
+                                                              final markerId =
+                                                                  MarkerId(shop
+                                                                      .id
+                                                                      .toString());
+                                                              // 直前に選択していたマーカーIDを取得
+                                                              final prevSelectedMarkerId = ref
+                                                                  .read(selectedMarkerProvider
+                                                                      .notifier)
+                                                                  .getSelectedMarker();
+                                                              // カメラ位置を移動するかを判定するための変数
+                                                              bool
+                                                                  needsUpdateAnimateCamera =
+                                                                  false;
+
+                                                              // 初回選択時
+                                                              if (prevSelectedMarkerId ==
+                                                                  null) {
+                                                                // 選択中のマーカーに該当するIndexを取得
+                                                                final selectedIndex = _markers
+                                                                    .values
+                                                                    .toList()
+                                                                    .indexWhere((m) =>
+                                                                        m.markerId ==
+                                                                        markerId);
+                                                                // 初回に先頭のIndexを選択した場合、PageControllerの変更を検知できないので、カメラ位置を移動する処理を明示的に実行する
+                                                                if (selectedIndex ==
+                                                                    0) {
+                                                                  needsUpdateAnimateCamera =
+                                                                      true;
+                                                                }
+                                                              }
+                                                              // 新たに選択したマーカーIDと直前に選択していたマーカーIDが同じ場合も同上
+                                                              else if (markerId ==
+                                                                  prevSelectedMarkerId) {
+                                                                needsUpdateAnimateCamera =
+                                                                    true;
+                                                              }
+
+                                                              // ボトムシートの高さを初期状態に戻す
+                                                              _resetBottomSheet();
+                                                              ref
+                                                                  .read(selectedMarkerProvider
+                                                                      .notifier)
+                                                                  .selectMarker(
+                                                                      markerId);
+                                                              _createCustomMarkers(
+                                                                  markerId);
+
+                                                              if (needsUpdateAnimateCamera) {
+                                                                // スワイプ後のお店の座標までカメラを移動
+                                                                _mapController.animateCamera(
+                                                                    CameraUpdate.newLatLng(LatLng(
+                                                                        shop.latitude,
+                                                                        shop.longitude)));
+                                                              }
+                                                            },
+                                                            child: Align(
+                                                              alignment:
+                                                                  Alignment
+                                                                      .center,
+                                                              child: Container(
+                                                                padding: const EdgeInsets
+                                                                    .symmetric(
+                                                                    horizontal:
+                                                                        16,
+                                                                    vertical:
+                                                                        4),
+                                                                decoration:
+                                                                    BoxDecoration(
+                                                                  color: Colors
+                                                                      .amberAccent,
+                                                                  borderRadius:
+                                                                      BorderRadius
+                                                                          .circular(
+                                                                              8),
+                                                                ),
+                                                                child: Text(
+                                                                  Config
+                                                                      .selectCard,
+                                                                  style:
+                                                                      TextStyle(
+                                                                    color: Colors
+                                                                        .black,
+                                                                    fontSize: Config
+                                                                        .fontSizeSmall,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .bold,
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ],
                                                     ),
+                                                  ],
+                                                ),
+                                                const SizedBox(width: 12),
+                                                Expanded(
+                                                  child: Column(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment.start,
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                          const SizedBox(
+                                                              height: 20),
+                                                          Text(
+                                                              '${shop.no}: ${shop.shopName}',
+                                                              style: TextStyle(
+                                                                  fontSize: Config
+                                                                      .fontSizeMediumLarge,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold)),
+                                                          const SizedBox(
+                                                              height: 4),
+                                                        ] +
+                                                        attributes.entries
+                                                            .map((entry) {
+                                                          return Padding(
+                                                            padding:
+                                                                EdgeInsets.only(
+                                                                    bottom: 4),
+                                                            child: Text(
+                                                              '${entry.key}: ${entry.value}',
+                                                              style: TextStyle(
+                                                                  fontSize: Config
+                                                                      .fontSizeVerySmall),
+                                                            ),
+                                                          );
+                                                        }).toList(),
                                                   ),
-                                                ],
-                                              ),
-                                            ],
-                                          ),
-                                          const SizedBox(width: 12),
-                                          Expanded(
-                                            child: Column(
-                                              mainAxisAlignment:
-                                              MainAxisAlignment.start,
-                                              crossAxisAlignment:
-                                              CrossAxisAlignment
-                                                  .start,
-                                              children: [
-                                                const SizedBox(
-                                                    height: 20),
-                                                Text(
-                                                    '${shop.no}: ${shop
-                                                        .shopName}',
-                                                    style: TextStyle(
-                                                        fontSize: Config
-                                                            .fontSizeMediumLarge,
-                                                        fontWeight:
-                                                        FontWeight
-                                                            .bold)),
-                                                const SizedBox(
-                                                    height: 4),
-                                              ] +
-                                                  attributes.entries
-                                                      .map((entry) {
-                                                    return Padding(
-                                                      padding:
-                                                      EdgeInsets.only(
-                                                          bottom: 4),
-                                                      child: Text(
-                                                        '${entry.key}: ${entry
-                                                            .value}',
-                                                        style: TextStyle(
-                                                            fontSize: Config
-                                                                .fontSizeVerySmall),
-                                                      ),
-                                                    );
-                                                  }).toList(),
+                                                ),
+                                              ],
                                             ),
                                           ),
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                }),
-                          )
-                              : Expanded(
-                            child: ListView(
-                              controller: _scrollController,
-                              children: [
-                                Container(
-                                  alignment: Alignment.topLeft,
-                                  padding: EdgeInsets.symmetric(
-                                      vertical: 20, horizontal: 20),
-                                  child: Text(
-                                    Config.noMatchingShops,
-                                    style: TextStyle(
-                                      color: colorScheme.primary,
-                                      fontSize:
-                                      Config.fontSizeMediumLarge,
-                                    ),
-                                  ),
+                                        );
+                                      }),
                                 )
-                              ],
-                            ),
-                          ),
+                              : Expanded(
+                                  child: ListView(
+                                    controller: _scrollController,
+                                    children: [
+                                      Container(
+                                        alignment: Alignment.topLeft,
+                                        padding: EdgeInsets.symmetric(
+                                            vertical: 20, horizontal: 20),
+                                        child: Text(
+                                          Config.noMatchingShops,
+                                          style: TextStyle(
+                                            color: colorScheme.primary,
+                                            fontSize:
+                                                Config.fontSizeMediumLarge,
+                                          ),
+                                        ),
+                                      )
+                                    ],
+                                  ),
+                                ),
                         ],
                       ),
                     );
@@ -1453,22 +1427,21 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
               }
             },
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (Object error, StackTrace stackTrace) =>
-                Center(
-                  child:
+            error: (Object error, StackTrace stackTrace) => Center(
+              child:
                   Text(Util.sprintf(Config.errorDetail, [Config.error, error])),
-                ),
+            ),
           ),
 
           // ボトムシート表示中に地図アイコンを表示
           _draggableController.isAttached &&
-              _draggableController.size > Config.bottomSheetMinSize * 7
+                  _draggableController.size > Config.bottomSheetMinSize * 7
               ? Positioned(
-            right: Config.showMapButtonPositionRight,
-            bottom: Config.showMapButtonPositionBottom +
-                Config.buttonMarginBottomNormal,
-            child: _showMapButton(context),
-          )
+                  right: Config.showMapButtonPositionRight,
+                  bottom: Config.showMapButtonPositionBottom +
+                      Config.buttonMarginBottomNormal,
+                  child: _showMapButton(context),
+                )
               : Container(),
         ],
       ),
@@ -1479,9 +1452,7 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
   Widget _buildSearchTypeButton(BuildContext context, WidgetRef ref,
       int searchKey, String label, Set<int> selectedKeys, String keyword) {
     // 現在のテーマからカラースキームを取得
-    final colorScheme = Theme
-        .of(context)
-        .colorScheme;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return ElevatedButton(
       onPressed: () async {
@@ -1513,16 +1484,14 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                   ? Colors.black
                   : colorScheme.primary,
               fontWeight:
-              selectedKeys.contains(searchKey) ? FontWeight.bold : null)),
+                  selectedKeys.contains(searchKey) ? FontWeight.bold : null)),
     );
   }
 
   // 現在値ボタンWidget
   Widget _goToCurrentPositionButton(BuildContext context) {
     // 現在のテーマからカラースキームを取得
-    final colorScheme = Theme
-        .of(context)
-        .colorScheme;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
@@ -1559,16 +1528,14 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
   // 地図表示ボタンWidget
   Widget _showMapButton(BuildContext context) {
     // 現在のテーマからカラースキームを取得
-    final colorScheme = Theme
-        .of(context)
-        .colorScheme;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
         minimumSize:
-        const Size(Config.showMapButtonWidth, Config.showMapButtonHeight),
+            const Size(Config.showMapButtonWidth, Config.showMapButtonHeight),
         maximumSize:
-        const Size(Config.showMapButtonWidth, Config.showMapButtonHeight),
+            const Size(Config.showMapButtonWidth, Config.showMapButtonHeight),
         backgroundColor: colorScheme.secondary,
         foregroundColor: colorScheme.primary,
       ),
