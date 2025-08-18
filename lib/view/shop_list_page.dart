@@ -1295,11 +1295,14 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
 
                                                               // ボトムシートの高さを初期状態に戻す
                                                               _resetBottomSheet();
-                                                              ref
-                                                                  .read(selectedMarkerProvider
-                                                                      .notifier)
-                                                                  .selectMarker(
-                                                                      markerId);
+                                                              _safeProviderUpdate(
+                                                                  () {
+                                                                ref
+                                                                    .read(selectedMarkerProvider
+                                                                        .notifier)
+                                                                    .selectMarker(
+                                                                        markerId);
+                                                              });
                                                               _createCustomMarkers(
                                                                   markerId);
 
