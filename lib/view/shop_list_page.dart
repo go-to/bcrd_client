@@ -70,6 +70,7 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
   Position? currentPosition;
   final _markerQueue = Queue<CustomMarker>();
   bool _isUpdating = false;
+  bool _isDisposed = false;
   int shopsTotalNum = 0;
 
   final _pageController = PageController(
@@ -97,13 +98,21 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
   @override
   void initState() {
     super.initState();
-    _startPositionStream();
     _markers = {};
     _customMarkers = [];
-    _setShopsTotal();
-    _initializeMarkers();
     _draggableController = DraggableScrollableController();
     _scrollController = ScrollController();
+
+    // 非同期処理は別途実行
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _safeProviderUpdate(() {
+        ref.read(searchConditionProvider.notifier).resetSearchCondition();
+        ref.read(searchKeywordProvider.notifier).resetSearchKeyword();
+        _startPositionStream();
+        _setShopsTotal();
+        _initializeMarkers();
+      });
+    });
   }
 
   void _resetBottomSheet() {
@@ -200,7 +209,9 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
           onTapParam: () {
             // ボトムシートの高さを初期状態に戻す
             _resetBottomSheet();
-            ref.read(selectedMarkerProvider.notifier).selectMarker(markerId);
+            _safeProviderUpdate(() {
+              ref.read(selectedMarkerProvider.notifier).selectMarker(markerId);
+            });
             _createCustomMarkers(markerId);
           },
         );
@@ -408,12 +419,37 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
 
   @override
   void dispose() {
-    _positionStream?.cancel();
+    _isDisposed = true;
     _scrollController.dispose();
     _draggableController.dispose();
     _pageController.dispose();
+    _searchController.dispose();
     _mapController.dispose();
+    _positionStream?.cancel();
     super.dispose();
+  }
+
+  void _safeProviderUpdate(VoidCallback updateCallback) {
+    if (_isDisposed || !mounted) return;
+
+    runZonedGuarded(() {
+      if (_isDisposed || !mounted) return;
+      updateCallback();
+    }, (error, stackTrace) {
+      final errorMessage = error.toString();
+      if (errorMessage
+              .contains('_lifecycleState != _ElementLifecycle.defunct') ||
+          errorMessage.contains('markNeedsBuild') ||
+          errorMessage.contains('ConsumerStatefulElement') ||
+          errorMessage.contains('disposed') ||
+          errorMessage.contains('defunct')) {
+        return;
+      }
+
+      if (!_isDisposed && mounted) {
+        debugPrint('Provider update error: $error');
+      }
+    });
   }
 
   // 現在地ストリームを開始
@@ -488,7 +524,9 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
       _createCustomMarkers(selectedMarkerId);
     }
     // マーカーの選択状態を解除
-    ref.read(selectedMarkerProvider.notifier).clearSelection();
+    _safeProviderUpdate(() {
+      ref.read(selectedMarkerProvider.notifier).clearSelection();
+    });
 
     // ボトムシートのスクロール位置を先頭に戻す
     if (needsBottomSheetScrollPosition! && _scrollController.hasClients) {
@@ -500,11 +538,19 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
 
   // キーワード検索
   void _keywordSearch() async {
+    if (!mounted) return;
+
     final query = _searchController.text.trim();
+
     // 検索キーワードを設定
-    ref.read(searchKeywordProvider.notifier).setSearchKeyword(query);
+    _safeProviderUpdate(() {
+      ref.read(searchKeywordProvider.notifier).setSearchKeyword(query);
+    });
+
     // 店舗情報を取得
-    _searchShops();
+    if (mounted) {
+      _searchShops();
+    }
   }
 
   @override
@@ -630,11 +676,17 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                                   suffixIcon: IconButton(
                                       icon: Icon(Icons.clear),
                                       onPressed: (() {
-                                        _searchController.clear();
-                                        _keywordSearch();
+                                        if (mounted) {
+                                          _searchController.clear();
+                                          _keywordSearch();
+                                        }
                                       })),
                                 ),
-                                onSubmitted: (text) => _keywordSearch(),
+                                onSubmitted: (text) {
+                                  if (mounted) {
+                                    _keywordSearch();
+                                  }
+                                },
                               ),
                             ],
                           ),
@@ -1016,11 +1068,15 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                                   onChanged: (value) {
                                     if (value != null) {
                                       // ソート順を設定
-                                      ref
-                                          .read(sortOrderProvider.notifier)
-                                          .setSortOrder(value);
+                                      _safeProviderUpdate(() {
+                                        ref
+                                            .read(sortOrderProvider.notifier)
+                                            .setSortOrder(value);
+                                      });
                                       // 店舗情報を取得
-                                      _searchShops();
+                                      if (mounted) {
+                                        _searchShops();
+                                      }
                                       // スクロール位置をリセット
                                       // scrollController.jumpTo(0);
                                     }
@@ -1239,11 +1295,14 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
 
                                                               // ボトムシートの高さを初期状態に戻す
                                                               _resetBottomSheet();
-                                                              ref
-                                                                  .read(selectedMarkerProvider
-                                                                      .notifier)
-                                                                  .selectMarker(
-                                                                      markerId);
+                                                              _safeProviderUpdate(
+                                                                  () {
+                                                                ref
+                                                                    .read(selectedMarkerProvider
+                                                                        .notifier)
+                                                                    .selectMarker(
+                                                                        markerId);
+                                                              });
                                                               _createCustomMarkers(
                                                                   markerId);
 
@@ -1400,14 +1459,21 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
 
     return ElevatedButton(
       onPressed: () async {
-        // ボタンの選択状態を設定
-        ref
-            .read(searchConditionProvider.notifier)
-            .setSearchCondition(searchKey);
-        // 検索キーワードを設定
-        ref.read(searchKeywordProvider.notifier).setSearchKeyword(keyword);
+        if (!mounted) return;
+
+        _safeProviderUpdate(() {
+          // ボタンの選択状態を設定
+          ref
+              .read(searchConditionProvider.notifier)
+              .setSearchCondition(searchKey);
+          // 検索キーワードを設定
+          ref.read(searchKeywordProvider.notifier).setSearchKeyword(keyword);
+        });
+
         // 店舗情報を取得
-        _searchShops();
+        if (mounted) {
+          _searchShops();
+        }
       },
       style: ElevatedButton.styleFrom(
         backgroundColor: selectedKeys.contains(searchKey)
