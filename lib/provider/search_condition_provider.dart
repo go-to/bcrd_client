@@ -31,4 +31,8 @@ class SearchCondition extends _$SearchCondition {
     }
     return getSearchCondition();
   }
+
+  void resetSearchCondition() {
+    state = {};
+  }
 }
