@@ -55,7 +55,7 @@ class MarkerCacheService {
     required bool isIrregularHoliday,
     required bool needsReservation,
   }) {
-    return '${shopName}_${inCurrentSales}_${isStamped}_${isIrregularHoliday}_${needsReservation}';
+    return '${shopName}_$inCurrentSales}_$isStamped}_$isIrregularHoliday}_$needsReservation';
   }
 
   /// キャッシュをクリア

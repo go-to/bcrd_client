@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 
 import '../common/util.dart';
 import '../const/config.dart';
@@ -17,7 +18,7 @@ class AuthService extends _$AuthService {
       final auth = ref.read(firebaseAuthProvider);
       await auth.signInAnonymously();
     } catch (e) {
-      print(
+      debugPrint(
           Util.sprintf(Config.errorDetail, [Config.failedToAnonymousLogin, e]));
     }
   }
@@ -27,7 +28,7 @@ class AuthService extends _$AuthService {
       final auth = ref.read(firebaseAuthProvider);
       await auth.signOut();
     } catch (e) {
-      print(Util.sprintf(Config.errorDetail, [Config.failedToLogout, e]));
+      debugPrint(Util.sprintf(Config.errorDetail, [Config.failedToLogout, e]));
     }
   }
 
@@ -37,7 +38,7 @@ class AuthService extends _$AuthService {
       final auth = ref.read(firebaseAuthProvider);
       return auth.currentUser;
     } catch (e) {
-      print(Util.sprintf(
+      debugPrint(Util.sprintf(
           Config.errorDetail, [Config.failedToGetAnonymousUserInformation, e]));
     }
     return null;

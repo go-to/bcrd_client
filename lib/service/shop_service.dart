@@ -14,13 +14,17 @@ class ShopService {
     try {
       shopsTotal = await GrpcService.getShopsTotal();
     } on GrpcError catch (e) {
-      print('Caught error: $e');
-      Util.showAlertDialog(
-          context, Config.failedToGetShopInformation, Config.buttonLabelClose);
+      debugPrint('Caught error: $e');
+      if (context.mounted) {
+        Util.showAlertDialog(context, Config.failedToGetShopInformation,
+            Config.buttonLabelClose);
+      }
     } catch (e) {
-      print('Caught error: $e');
-      Util.showAlertDialog(
-          context, Config.failedToGetShopInformation, Config.buttonLabelClose);
+      debugPrint('Caught error: $e');
+      if (context.mounted) {
+        Util.showAlertDialog(context, Config.failedToGetShopInformation,
+            Config.buttonLabelClose);
+      }
     }
 
     return shopsTotal;
@@ -40,13 +44,17 @@ class ShopService {
       shops = await GrpcService.getShops(
           userId, searchParams, searchKeyword, sortOrder, latitude, longitude);
     } on GrpcError catch (e) {
-      print('Caught error: $e');
-      Util.showAlertDialog(
-          context, Config.failedToGetShopInformation, Config.buttonLabelClose);
+      debugPrint('Caught error: $e');
+      if (context.mounted) {
+        Util.showAlertDialog(context, Config.failedToGetShopInformation,
+            Config.buttonLabelClose);
+      }
     } catch (e) {
-      print('Caught error: $e');
-      Util.showAlertDialog(
-          context, Config.failedToGetShopInformation, Config.buttonLabelClose);
+      debugPrint('Caught error: $e');
+      if (context.mounted) {
+        Util.showAlertDialog(context, Config.failedToGetShopInformation,
+            Config.buttonLabelClose);
+      }
     }
 
     return shops;
@@ -60,13 +68,17 @@ class ShopService {
     try {
       shop = await GrpcService.getShop(userId, shopId);
     } on GrpcError catch (e) {
-      print('Caught error: $e');
-      Util.showAlertDialog(
-          context, Config.failedToGetShopInformation, Config.buttonLabelClose);
+      debugPrint('Caught error: $e');
+      if (context.mounted) {
+        Util.showAlertDialog(context, Config.failedToGetShopInformation,
+            Config.buttonLabelClose);
+      }
     } catch (e) {
-      print('Caught error: $e');
-      Util.showAlertDialog(
-          context, Config.failedToGetShopInformation, Config.buttonLabelClose);
+      debugPrint('Caught error: $e');
+      if (context.mounted) {
+        Util.showAlertDialog(context, Config.failedToGetShopInformation,
+            Config.buttonLabelClose);
+      }
     }
 
     return shop;
