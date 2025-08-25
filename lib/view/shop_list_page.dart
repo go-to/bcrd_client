@@ -503,15 +503,6 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
           // 現在地を保存
           currentPosition = position;
 
-          // カメラを現在地に移動（実際の位置を使用）
-          if (_mapCreated) {
-            _mapController.animateCamera(
-              CameraUpdate.newLatLng(
-                LatLng(position.latitude, position.longitude),
-              ),
-            );
-          }
-
           // 位置情報更新の間隔制御
           final now = DateTime.now();
           if (_lastLocationUpdate == null ||
