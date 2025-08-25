@@ -194,7 +194,7 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
       markerId: MarkerId(marker.id),
       position: marker.position,
       icon: icon,
-      zIndex: zIndex,
+      zIndexInt: zIndex.toInt(),
     );
   }
 
@@ -208,7 +208,7 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
           position: marker.position,
         ).copyWith(
           iconParam: marker.icon,
-          zIndexParam: marker.zIndex,
+          zIndexIntParam: marker.zIndexInt,
           onTapParam: () {
             // ボトムシートの高さを初期状態に戻す
             _resetBottomSheet();

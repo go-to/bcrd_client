@@ -21,30 +21,46 @@ class SettingPage extends ConsumerWidget {
         appBar: AppBar(title: const Text(Config.settingPageTitle)),
         body: Column(
           children: [
-            RadioListTile<ThemeMode>(
-              title: const Text(Config.themeLight),
-              value: ThemeMode.light,
-              groupValue: currentTheme,
-              onChanged: (mode) =>
-                  ref.read(themeNotifierProvider.notifier).updateTheme(mode!),
-            ),
-            RadioListTile<ThemeMode>(
-              title: const Text(Config.themeDark),
-              value: ThemeMode.dark,
-              groupValue: currentTheme,
-              onChanged: (mode) =>
-                  ref.read(themeNotifierProvider.notifier).updateTheme(mode!),
-            ),
-            RadioListTile<ThemeMode>(
-              title: const Text(Config.themeSystemSetting),
-              value: ThemeMode.system,
-              groupValue: currentTheme,
-              onChanged: (mode) =>
-                  ref.read(themeNotifierProvider.notifier).updateTheme(mode!),
-            ),
+            _buildThemeOption(
+                context, ref, Config.themeLight, ThemeMode.light, currentTheme),
+            _buildThemeOption(
+                context, ref, Config.themeDark, ThemeMode.dark, currentTheme),
+            _buildThemeOption(context, ref, Config.themeSystemSetting,
+                ThemeMode.system, currentTheme),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildThemeOption(BuildContext context, WidgetRef ref, String title,
+      ThemeMode value, ThemeMode? currentTheme) {
+    return ListTile(
+      leading: Padding(
+        padding: const EdgeInsets.only(left: 8.0),
+        child: Container(
+          width: 20,
+          height: 20,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: Theme.of(context).colorScheme.primary,
+              width: 2,
+            ),
+          ),
+          child: currentTheme == value
+              ? Container(
+                  margin: const EdgeInsets.all(3),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                )
+              : null,
+        ),
+      ),
+      title: Text(title),
+      onTap: () => ref.read(themeNotifierProvider.notifier).updateTheme(value),
     );
   }
 }
