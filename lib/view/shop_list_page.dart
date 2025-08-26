@@ -111,6 +111,7 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
       _safeProviderUpdate(() {
         ref.read(searchConditionProvider.notifier).resetSearchCondition();
         ref.read(searchKeywordProvider.notifier).resetSearchKeyword();
+        ref.read(sortOrderProvider.notifier).resetSortOrder();
         _startPositionStream();
         _setShopsTotal();
         _initializeMarkers();

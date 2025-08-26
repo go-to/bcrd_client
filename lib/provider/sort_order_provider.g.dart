@@ -6,7 +6,7 @@ part of 'sort_order_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$sortOrderHash() => r'e66fefdaa5cd6a80297ea0d35e66d66dd3f49225';
+String _$sortOrderHash() => r'63ede5d5250f2c09206647ae523997502b1469be';
 
 /// See also [SortOrder].
 @ProviderFor(SortOrder)
