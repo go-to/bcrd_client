@@ -4,13 +4,19 @@ import '../common/util.dart';
 import '../const/config.dart';
 import '../provider/firebase_provider.dart';
 import '../service/auth_service.dart';
+import '../service/grpc_service.dart';
 import 'home_page.dart';
 
-class AuthWrapper extends ConsumerWidget {
+class AuthWrapper extends ConsumerStatefulWidget {
   const AuthWrapper({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AuthWrapper> createState() => _AuthWrapperState();
+}
+
+class _AuthWrapperState extends ConsumerState<AuthWrapper> {
+  @override
+  Widget build(BuildContext context) {
     final authState = ref.watch(authStateChangesProvider);
 
     return authState.when(
@@ -35,5 +41,11 @@ class AuthWrapper extends ConsumerWidget {
                 Config.errorDetail, [Config.anErrorHasOccurred, error]))),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    GrpcService.shutdown();
+    super.dispose();
   }
 }

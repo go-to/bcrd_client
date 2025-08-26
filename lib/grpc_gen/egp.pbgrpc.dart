@@ -41,6 +41,10 @@ class EgpServiceClient extends $grpc.Client {
       '/egp.EgpService/DeleteStamp',
       ($0.StampRequest value) => value.writeToBuffer(),
       ($core.List<$core.int> value) => $0.StampResponse.fromBuffer(value));
+  static final _$mergeUserStamp = $grpc.ClientMethod<$0.MergeUserStampRequest, $0.MergeUserStampResponse>(
+      '/egp.EgpService/MergeUserStamp',
+      ($0.MergeUserStampRequest value) => value.writeToBuffer(),
+      ($core.List<$core.int> value) => $0.MergeUserStampResponse.fromBuffer(value));
 
   EgpServiceClient($grpc.ClientChannel channel,
       {$grpc.CallOptions? options,
@@ -66,6 +70,10 @@ class EgpServiceClient extends $grpc.Client {
 
   $grpc.ResponseFuture<$0.StampResponse> deleteStamp($0.StampRequest request, {$grpc.CallOptions? options}) {
     return $createUnaryCall(_$deleteStamp, request, options: options);
+  }
+
+  $grpc.ResponseFuture<$0.MergeUserStampResponse> mergeUserStamp($0.MergeUserStampRequest request, {$grpc.CallOptions? options}) {
+    return $createUnaryCall(_$mergeUserStamp, request, options: options);
   }
 }
 
@@ -109,6 +117,13 @@ abstract class EgpServiceBase extends $grpc.Service {
         false,
         ($core.List<$core.int> value) => $0.StampRequest.fromBuffer(value),
         ($0.StampResponse value) => value.writeToBuffer()));
+    $addMethod($grpc.ServiceMethod<$0.MergeUserStampRequest, $0.MergeUserStampResponse>(
+        'MergeUserStamp',
+        mergeUserStamp_Pre,
+        false,
+        false,
+        ($core.List<$core.int> value) => $0.MergeUserStampRequest.fromBuffer(value),
+        ($0.MergeUserStampResponse value) => value.writeToBuffer()));
   }
 
   $async.Future<$0.ShopsTotalResponse> getShopsTotal_Pre($grpc.ServiceCall call, $async.Future<$0.ShopsTotalRequest> request) async {
@@ -131,9 +146,14 @@ abstract class EgpServiceBase extends $grpc.Service {
     return deleteStamp(call, await request);
   }
 
+  $async.Future<$0.MergeUserStampResponse> mergeUserStamp_Pre($grpc.ServiceCall call, $async.Future<$0.MergeUserStampRequest> request) async {
+    return mergeUserStamp(call, await request);
+  }
+
   $async.Future<$0.ShopsTotalResponse> getShopsTotal($grpc.ServiceCall call, $0.ShopsTotalRequest request);
   $async.Future<$0.ShopsResponse> getShops($grpc.ServiceCall call, $0.ShopsRequest request);
   $async.Future<$0.ShopResponse> getShop($grpc.ServiceCall call, $0.ShopRequest request);
   $async.Future<$0.StampResponse> addStamp($grpc.ServiceCall call, $0.StampRequest request);
   $async.Future<$0.StampResponse> deleteStamp($grpc.ServiceCall call, $0.StampRequest request);
+  $async.Future<$0.MergeUserStampResponse> mergeUserStamp($grpc.ServiceCall call, $0.MergeUserStampRequest request);
 }

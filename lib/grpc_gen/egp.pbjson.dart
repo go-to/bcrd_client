@@ -340,12 +340,14 @@ const ShopResponse$json = {
   '1': 'ShopResponse',
   '2': [
     {'1': 'shop', '3': 1, '4': 1, '5': 11, '6': '.egp.Shop', '10': 'shop'},
+    {'1': 'is_event_period', '3': 2, '4': 1, '5': 8, '10': 'isEventPeriod'},
   ],
 };
 
 /// Descriptor for `ShopResponse`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List shopResponseDescriptor = $convert.base64Decode(
-    'CgxTaG9wUmVzcG9uc2USHQoEc2hvcBgBIAEoCzIJLmVncC5TaG9wUgRzaG9w');
+    'CgxTaG9wUmVzcG9uc2USHQoEc2hvcBgBIAEoCzIJLmVncC5TaG9wUgRzaG9wEiYKD2lzX2V2ZW'
+    '50X3BlcmlvZBgCIAEoCFINaXNFdmVudFBlcmlvZA==');
 
 @$core.Deprecated('Use stampRequestDescriptor instead')
 const StampRequest$json = {
@@ -373,4 +375,30 @@ const StampResponse$json = {
 final $typed_data.Uint8List stampResponseDescriptor = $convert.base64Decode(
     'Cg1TdGFtcFJlc3BvbnNlEiYKD251bWJlcl9vZl90aW1lcxgBIAEoBVINbnVtYmVyT2ZUaW1lcw'
     '==');
+
+@$core.Deprecated('Use mergeUserStampRequestDescriptor instead')
+const MergeUserStampRequest$json = {
+  '1': 'MergeUserStampRequest',
+  '2': [
+    {'1': 'user_id', '3': 1, '4': 1, '5': 9, '10': 'userId'},
+    {'1': 'anonymous_user_id', '3': 2, '4': 1, '5': 9, '10': 'anonymousUserId'},
+  ],
+};
+
+/// Descriptor for `MergeUserStampRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List mergeUserStampRequestDescriptor = $convert.base64Decode(
+    'ChVNZXJnZVVzZXJTdGFtcFJlcXVlc3QSFwoHdXNlcl9pZBgBIAEoCVIGdXNlcklkEioKEWFub2'
+    '55bW91c191c2VyX2lkGAIgASgJUg9hbm9ueW1vdXNVc2VySWQ=');
+
+@$core.Deprecated('Use mergeUserStampResponseDescriptor instead')
+const MergeUserStampResponse$json = {
+  '1': 'MergeUserStampResponse',
+  '2': [
+    {'1': 'stamp_num', '3': 1, '4': 1, '5': 5, '10': 'stampNum'},
+  ],
+};
+
+/// Descriptor for `MergeUserStampResponse`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List mergeUserStampResponseDescriptor = $convert.base64Decode(
+    'ChZNZXJnZVVzZXJTdGFtcFJlc3BvbnNlEhsKCXN0YW1wX251bRgBIAEoBVIIc3RhbXBOdW0=');
 

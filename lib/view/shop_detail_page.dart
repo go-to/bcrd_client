@@ -63,7 +63,7 @@ class _ShopPageDetail extends ConsumerState<ShopDetailPage> {
     final user = ref.read(authServiceProvider.notifier).getCurrentUser();
     final userId = user!.uid;
     final shopId = widget.shopId;
-    final stampNumAsync = ref.watch(StampProvider(context, userId, shopId));
+    final stampNumAsync = ref.watch(stampProvider(context, userId, shopId));
     // 現在のテーマからカラースキームを取得
     final colorScheme = Theme.of(context).colorScheme;
 
@@ -85,10 +85,14 @@ class _ShopPageDetail extends ConsumerState<ShopDetailPage> {
               onPressed: () async {
                 // 現在のURLを取得してクリップボードにコピー
                 String? currentUrl = await _controller.currentUrl();
+                if (!mounted) return;
                 if (currentUrl != null) {
                   Clipboard.setData(ClipboardData(text: currentUrl));
                   String message = '${Config.messageUrlCopied}\n$currentUrl';
-                  _showTopSnackBar(context, message);
+                  if (mounted) {
+                    // ignore: use_build_context_synchronously
+                    _showTopSnackBar(context, message);
+                  }
                 }
               },
             ),
@@ -151,7 +155,7 @@ class _ShopPageDetail extends ConsumerState<ShopDetailPage> {
                       ElevatedButton(
                         onPressed: () {
                           ref
-                              .read(StampProvider(context, userId, shopId)
+                              .read(stampProvider(context, userId, shopId)
                                   .notifier)
                               .addStamp(context, userId, shopId);
                         },
@@ -190,7 +194,7 @@ class _ShopPageDetail extends ConsumerState<ShopDetailPage> {
                             return;
                           }
                           ref
-                              .read(StampProvider(context, userId, shopId)
+                              .read(stampProvider(context, userId, shopId)
                                   .notifier)
                               .deleteStamp(context, userId, shopId);
                         },
@@ -299,7 +303,7 @@ class _ShopPageDetail extends ConsumerState<ShopDetailPage> {
     // ブラウザでGoogle Mapsを開く
     else if (await canLaunchUrl(browserUrl)) {
       await launchUrl(browserUrl);
-    } else {
+    } else if (mounted) {
       // どれも起動できない場合のエラーメッセージ
       Util.showAlertDialog(
           context, Config.messageMapCannotOpened, Config.buttonLabelClose);

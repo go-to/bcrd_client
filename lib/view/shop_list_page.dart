@@ -19,6 +19,7 @@ import '../grpc_gen/egp.pb.dart' as pb;
 import '../provider/marker_provider.dart';
 import '../provider/shop_provider.dart';
 import '../service/shop_service.dart';
+import '../service/marker_cache_service.dart';
 import '../view/shop_detail_page.dart';
 import '../icon/custom_icons.dart' as custom_icon;
 
@@ -72,13 +73,15 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
   bool _isUpdating = false;
   bool _isDisposed = false;
   int shopsTotalNum = 0;
+  DateTime? _lastLocationUpdate;
+  Timer? _locationUpdateTimer;
 
   final _pageController = PageController(
     viewportFraction: 0.85,
   );
 
   final LocationSettings locationSettings = const LocationSettings(
-    accuracy: LocationAccuracy.high,
+    accuracy: LocationAccuracy.medium,
     distanceFilter: Config.locationDistanceFilter,
   );
 
@@ -186,12 +189,12 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
     } else if (marker.isStamped) {
       zIndex = 0.0;
     }
-    final icon = await _generateCustomIcon(marker, selectedMarkerId);
+    final icon = await _generateCustomIconWithCache(marker, selectedMarkerId);
     return Marker(
       markerId: MarkerId(marker.id),
       position: marker.position,
       icon: icon,
-      zIndex: zIndex,
+      zIndexInt: zIndex.toInt(),
     );
   }
 
@@ -205,7 +208,7 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
           position: marker.position,
         ).copyWith(
           iconParam: marker.icon,
-          zIndexParam: marker.zIndex,
+          zIndexIntParam: marker.zIndexInt,
           onTapParam: () {
             // ボトムシートの高さを初期状態に戻す
             _resetBottomSheet();
@@ -238,6 +241,34 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
         ),
       );
     }
+  }
+
+  Future<BitmapDescriptor> _generateCustomIconWithCache(CustomMarker marker,
+      [MarkerId? selectedMarkerId]) async {
+    final cacheService = MarkerCacheService();
+
+    // キャッシュキーを生成
+    final isSelected =
+        selectedMarkerId != null && selectedMarkerId.value == marker.id;
+    final cacheKey = _generateMarkerCacheKey(marker, isSelected);
+
+    // キャッシュから取得を試行
+    final cachedIcon = cacheService.getFromCache(cacheKey);
+    if (cachedIcon != null) {
+      return cachedIcon;
+    }
+
+    // キャッシュにない場合は新規生成
+    final icon = await _generateCustomIcon(marker, selectedMarkerId);
+
+    // キャッシュに保存
+    cacheService.saveToCache(cacheKey, icon);
+
+    return icon;
+  }
+
+  String _generateMarkerCacheKey(CustomMarker marker, bool isSelected) {
+    return '${marker.id}_${marker.no}_${marker.categoryId}_${marker.inCurrentSales}_${marker.isStamped}_${marker.isIrregularHoliday}_${marker.needsReservation}_$isSelected';
   }
 
   Future<BitmapDescriptor> _generateCustomIcon(CustomMarker marker,
@@ -420,6 +451,9 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
   @override
   void dispose() {
     _isDisposed = true;
+    // キャッシュクリア（メモリリークを防ぐため）
+    MarkerCacheService().clearCache();
+    _locationUpdateTimer?.cancel();
     _scrollController.dispose();
     _draggableController.dispose();
     _pageController.dispose();
@@ -466,21 +500,36 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
           Geolocator.getPositionStream(locationSettings: locationSettings)
               .listen(
         (Position position) {
-          // カメラを現在地に移動
-          if (!_mapCreated) {
-            CircularProgressIndicator();
-          } else {
+          // 現在地を保存
+          currentPosition = position;
+
+          // カメラを現在地に移動（実際の位置を使用）
+          if (_mapCreated) {
             _mapController.animateCamera(
-              CameraUpdate.newLatLng(_kGooglePlex.target),
+              CameraUpdate.newLatLng(
+                LatLng(position.latitude, position.longitude),
+              ),
             );
           }
-          setState(() {});
+
+          // 位置情報更新の間隔制御
+          final now = DateTime.now();
+          if (_lastLocationUpdate == null ||
+              now.difference(_lastLocationUpdate!).inMilliseconds >=
+                  Config.locationUpdateIntervalMs) {
+            _lastLocationUpdate = now;
+
+            // 位置情報が更新されたらマーカーを更新
+            _searchShops(false);
+          }
         },
         onError: (e) {
-          print(Util.sprintf(
+          debugPrint(Util.sprintf(
               Config.errorDetail, [Config.failedToGetLocationInformation, e]));
-          Util.showAlertDialog(context, Config.failedToGetLocationInformation,
-              Config.buttonLabelClose);
+          if (mounted) {
+            Util.showAlertDialog(context, Config.failedToGetLocationInformation,
+                Config.buttonLabelClose);
+          }
         },
       );
     }
@@ -507,6 +556,7 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
     final position = await _getCurrentPosition();
     final latitude = position.latitude;
     final longitude = position.longitude;
+    if (!mounted) return null;
 
     // 店舗情報を取得
     final shops = await ref.read(shopProvider(context).notifier).getShops(
@@ -577,30 +627,35 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
               if (_locationPermissionGranted) {
                 return Stack(
                   children: [
-                    GoogleMap(
-                      mapType: MapType.normal,
-                      initialCameraPosition: _kGooglePlex,
-                      myLocationEnabled: true,
-                      myLocationButtonEnabled: false,
-                      zoomControlsEnabled: false,
-                      onMapCreated: (GoogleMapController controller) async {
-                        final googleMapStyle = await rootBundle
-                            .loadString(Config.googleMapStyleJsonPath);
-                        if (Theme.of(context).brightness == Brightness.dark) {
-                          await controller.setMapStyle(googleMapStyle);
-                        }
-                        _mapController = controller;
-                        setState(() {
-                          _mapCreated = true;
-                        });
+                    FutureBuilder<String>(
+                      future: Theme.of(context).brightness == Brightness.dark
+                          ? rootBundle.loadString(Config.googleMapStyleJsonPath)
+                          : Future.value(''),
+                      builder: (context, snapshot) {
+                        return GoogleMap(
+                          mapType: MapType.normal,
+                          initialCameraPosition: _kGooglePlex,
+                          myLocationEnabled: true,
+                          myLocationButtonEnabled: false,
+                          zoomControlsEnabled: false,
+                          style: snapshot.hasData && snapshot.data!.isNotEmpty
+                              ? snapshot.data!
+                              : null,
+                          onMapCreated: (GoogleMapController controller) async {
+                            _mapController = controller;
+                            setState(() {
+                              _mapCreated = true;
+                            });
+                          },
+                          onTap: (LatLng position) async {
+                            ref
+                                .read(selectedMarkerProvider.notifier)
+                                .clearSelection();
+                            _createCustomMarkers();
+                          },
+                          markers: _markers.values.toSet(),
+                        );
                       },
-                      onTap: (LatLng position) async {
-                        ref
-                            .read(selectedMarkerProvider.notifier)
-                            .clearSelection();
-                        _createCustomMarkers();
-                      },
-                      markers: _markers.values.toSet(),
                     ),
                     if (!_mapCreated)
                       const Center(child: CircularProgressIndicator()),
@@ -838,8 +893,7 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                       };
                       return GestureDetector(
                           onTap: () async {
-                            final result =
-                                await Navigator.of(context).push<bool>(
+                            await Navigator.of(context).push<bool>(
                               MaterialPageRoute(builder: (context) {
                                 final shop = shops.shops.elementAt(index);
                                 return ShopDetailPage(
@@ -1574,6 +1628,7 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
 
     // 位置情報サービスが有効か確認
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!mounted) return false;
     if (!serviceEnabled) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(Config.pleaseEnableLocationServices)),
@@ -1585,6 +1640,7 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
     permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
+      if (!mounted) return false;
       if (permission == LocationPermission.denied) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(Config.locationPermissionDenied)),
@@ -1594,6 +1650,7 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
     }
 
     if (permission == LocationPermission.deniedForever) {
+      if (!mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(Config.locationPermissionPermanentlyDenied)),
       );
