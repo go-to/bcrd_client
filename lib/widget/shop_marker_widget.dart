@@ -36,7 +36,7 @@ class ShopMarkerWidget extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.9),
+            color: Colors.white.withValues(alpha: 0.9),
             borderRadius: BorderRadius.circular(4.0),
           ),
           child: Text(

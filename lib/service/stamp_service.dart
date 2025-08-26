@@ -14,11 +14,15 @@ class StampService {
     try {
       stamp = await GrpcService.addStamp(userId, shopId);
     } on GrpcError catch (e) {
-      print('Caught error: $e');
-      Util.showAlertDialog(context, 'スタンプ獲得に失敗しました', Config.buttonLabelClose);
+      debugPrint('Caught error: $e');
+      if (context.mounted) {
+        Util.showAlertDialog(context, 'スタンプ獲得に失敗しました', Config.buttonLabelClose);
+      }
     } catch (e) {
-      print('Caught error: $e');
-      Util.showAlertDialog(context, 'スタンプ獲得に失敗しました', Config.buttonLabelClose);
+      debugPrint('Caught error: $e');
+      if (context.mounted) {
+        Util.showAlertDialog(context, 'スタンプ獲得に失敗しました', Config.buttonLabelClose);
+      }
     }
 
     return stamp;
@@ -31,11 +35,17 @@ class StampService {
     try {
       stamp = await GrpcService.deleteStamp(userId, shopId);
     } on GrpcError catch (e) {
-      print('Caught error: $e');
-      Util.showAlertDialog(context, 'スタンプ取り消しに失敗しました', Config.buttonLabelClose);
+      debugPrint('Caught error: $e');
+      if (context.mounted) {
+        Util.showAlertDialog(
+            context, 'スタンプ取り消しに失敗しました', Config.buttonLabelClose);
+      }
     } catch (e) {
-      print('Caught error: $e');
-      Util.showAlertDialog(context, 'スタンプ取り消しに失敗しました', Config.buttonLabelClose);
+      debugPrint('Caught error: $e');
+      if (context.mounted) {
+        Util.showAlertDialog(
+            context, 'スタンプ取り消しに失敗しました', Config.buttonLabelClose);
+      }
     }
 
     return stamp;

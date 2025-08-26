@@ -55,7 +55,7 @@ class ThemeNotifier extends _$ThemeNotifier {
       await prefs.setInt('theme_mode', mode.index);
     } catch (e) {
       // 保存に失敗した場合はログを出力するが、UIには影響しない
-      print('Failed to save theme preference: $e');
+      debugPrint('Failed to save theme preference: $e');
     }
   }
 }

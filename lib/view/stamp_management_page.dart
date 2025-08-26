@@ -128,7 +128,7 @@ class _StampManagementPageState extends ConsumerState<StampManagementPage> {
                     final shop = data.shops.toList()[index];
                     return GestureDetector(
                       onTap: () async {
-                        final result = await Navigator.of(context).push<bool>(
+                        await Navigator.of(context).push<bool>(
                           MaterialPageRoute(builder: (context) {
                             return ShopDetailPage(
                                 year: shop.year,
