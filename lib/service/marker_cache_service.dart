@@ -1,6 +1,8 @@
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter/foundation.dart';
 
+import '../const/config.dart';
+
 class MarkerCacheService {
   static final MarkerCacheService _instance = MarkerCacheService._internal();
 
@@ -9,7 +11,7 @@ class MarkerCacheService {
   MarkerCacheService._internal();
 
   final Map<String, BitmapDescriptor> _cache = {};
-  final int _maxCacheSize = 100; // 最大キャッシュサイズ
+  final int _maxCacheSize = Config.markerMaxCacheSize; // 最大キャッシュサイズ
   final List<String> _accessOrder = []; // LRU用のアクセス順序管理
 
   /// キャッシュからマーカーアイコンを取得

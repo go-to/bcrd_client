@@ -40,6 +40,7 @@ class Config {
   static const String shopCardAttributeAddress = '住所';
   static const String shopCardAttributeBusinessHours = '提供時間';
   static const int customMarkerIconGenerateProcessBatchSize = 100;
+  static const int markerMaxCacheSize = 200;
 
   // ボトムシート
   static const double bottomSheetMinSize = 0.05;
