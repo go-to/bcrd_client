@@ -7,14 +7,55 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'const/config.dart';
 import 'firebase_options.dart';
+import 'service/webview_preload_service.dart';
+import 'service/webview_cache_manager.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: '.env');
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // WebView最適化サービスの初期化
+  await _initializeOptimizationServices();
+
   runApp(
     ProviderScope(child: MyApp()),
   );
+}
+
+Future<void> _initializeOptimizationServices() async {
+  await Future.wait([
+    WebViewPreloadService().initialize(),
+    WebViewCacheManager().initialize(),
+  ]);
+
+  _preloadCommonResources();
+}
+
+void _preloadCommonResources() {
+  Future.delayed(Duration(seconds: 2), () async {
+    final webViewService = WebViewPreloadService();
+    final cacheManager = WebViewCacheManager();
+
+    final currentYear = DateTime.now().year;
+    final targetYears = [
+      currentYear,
+      currentYear - 1,
+      // currentYear - 2,
+    ];
+
+    final urlsToPreload = <String>[];
+
+    for (final year in targetYears) {
+      for (int shopNo = 1; shopNo <= 150; shopNo++) {
+        final url = '${Config.eventBaseUrl}/$year/$shopNo';
+        urlsToPreload.add(url);
+      }
+    }
+
+    await webViewService.preloadUrls(urlsToPreload);
+    await cacheManager.preloadCommonUrls(urlsToPreload);
+  });
 }
 
 class MyApp extends ConsumerWidget {
