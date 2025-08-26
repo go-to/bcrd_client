@@ -27,4 +27,8 @@ class SortOrder extends _$SortOrder {
     state = key;
     return getSortOrder();
   }
+
+  void resetSortOrder() {
+    state = 0;
+  }
 }
