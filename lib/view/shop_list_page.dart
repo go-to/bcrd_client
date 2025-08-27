@@ -12,6 +12,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
 import '../common/util.dart';
 import '../const/config.dart';
@@ -75,6 +76,7 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
   int shopsTotalNum = 0;
   DateTime? _lastLocationUpdate;
   Timer? _locationUpdateTimer;
+  WebViewController? _preloadController;
 
   final _pageController = PageController(
     viewportFraction: 0.85,
@@ -120,8 +122,21 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
   }
 
   void _resetBottomSheet() {
-    _draggableController.reset();
-    _draggableController = DraggableScrollableController();
+    if (_isDisposed || !mounted) return;
+
+    try {
+      if (_draggableController.isAttached) {
+        _draggableController.reset();
+      }
+      // 既存のコントローラーを安全に破棄して新規作成
+      if (_draggableController.isAttached) {
+        _draggableController.dispose();
+      }
+      _draggableController = DraggableScrollableController();
+    } catch (e) {
+      // エラーが発生した場合は新規作成のみ行う
+      _draggableController = DraggableScrollableController();
+    }
   }
 
   void _setShopsTotal() async {
@@ -211,12 +226,16 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
           iconParam: marker.icon,
           zIndexIntParam: marker.zIndexInt,
           onTapParam: () {
+            if (!mounted || _isDisposed) return;
+
             // ボトムシートの高さを初期状態に戻す
             _resetBottomSheet();
             _safeProviderUpdate(() {
               ref.read(selectedMarkerProvider.notifier).selectMarker(markerId);
             });
             _createCustomMarkers(markerId);
+            // WebViewのURLをプレロード
+            _preloadWebViewForMarker(markerId);
           },
         );
       }
@@ -449,41 +468,136 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
     });
   }
 
+  void _preloadWebViewForMarker(MarkerId markerId) async {
+    if (!mounted || _isDisposed) return;
+
+    final shopListAsync = ref.read(shopProvider(context));
+    shopListAsync.whenData((shops) {
+      if (!mounted || _isDisposed) return;
+
+      if (shops != null) {
+        final shop = shops.shops.firstWhere(
+          (shop) => shop.id.toString() == markerId.value,
+          orElse: () => shops.shops.first,
+        );
+
+        final String webViewUrl =
+            '${Config.eventBaseUrl}/${shop.year}/${shop.no}';
+
+        // 既存のWebViewControllerを破棄
+        _preloadController = null;
+
+        // 新しいWebViewControllerを作成してURLをプレロード
+        _preloadController = WebViewController()
+          ..setJavaScriptMode(JavaScriptMode.unrestricted)
+          ..setNavigationDelegate(NavigationDelegate(
+            onNavigationRequest: (request) {
+              if (request.url.contains('ads')) {
+                return NavigationDecision.prevent;
+              }
+              return NavigationDecision.navigate;
+            },
+          ))
+          ..loadRequest(Uri.parse(webViewUrl));
+      }
+    });
+  }
+
   @override
   void dispose() {
     _isDisposed = true;
     // キャッシュクリア（メモリリークを防ぐため）
     MarkerCacheService().clearCache();
     _locationUpdateTimer?.cancel();
-    _scrollController.dispose();
-    _draggableController.dispose();
-    _pageController.dispose();
-    _searchController.dispose();
-    _mapController.dispose();
+
+    // ScrollControllerの安全な破棄
+    try {
+      if (_scrollController.hasClients) {
+        _scrollController.dispose();
+      }
+    } catch (e) {
+      // 既にdisposeされている場合は無視
+    }
+
+    // DraggableScrollableControllerの安全な破棄
+    try {
+      if (_draggableController.isAttached) {
+        _draggableController.dispose();
+      }
+    } catch (e) {
+      // 既にdisposeされている場合は無視
+    }
+
+    // PageControllerの安全な破棄
+    try {
+      if (_pageController.hasClients) {
+        _pageController.dispose();
+      }
+    } catch (e) {
+      // 既にdisposeされている場合は無視
+    }
+
+    // その他のコントローラー
+    try {
+      _searchController.dispose();
+    } catch (e) {
+      // 既にdisposeされている場合は無視
+    }
+
+    try {
+      _mapController.dispose();
+    } catch (e) {
+      // 既にdisposeされている場合は無視
+    }
+
     _positionStream?.cancel();
+    _preloadController = null;
     super.dispose();
   }
 
   void _safeProviderUpdate(VoidCallback updateCallback) {
     if (_isDisposed || !mounted) return;
 
-    runZonedGuarded(() {
+    // 小さな遅延を追加してUIの更新サイクルとの競合を回避
+    Future.delayed(const Duration(milliseconds: 1), () {
       if (_isDisposed || !mounted) return;
-      updateCallback();
-    }, (error, stackTrace) {
-      final errorMessage = error.toString();
-      if (errorMessage
-              .contains('_lifecycleState != _ElementLifecycle.defunct') ||
-          errorMessage.contains('markNeedsBuild') ||
-          errorMessage.contains('ConsumerStatefulElement') ||
-          errorMessage.contains('disposed') ||
-          errorMessage.contains('defunct')) {
-        return;
-      }
 
-      if (!_isDisposed && mounted) {
-        debugPrint('Provider update error: $error');
-      }
+      runZonedGuarded(() {
+        if (_isDisposed || !mounted) return;
+
+        try {
+          updateCallback();
+        } catch (e) {
+          final errorMessage = e.toString();
+          if (errorMessage
+                  .contains('_lifecycleState != _ElementLifecycle.defunct') ||
+              errorMessage.contains('markNeedsBuild') ||
+              errorMessage.contains('ConsumerStatefulElement') ||
+              errorMessage.contains('disposed') ||
+              errorMessage.contains('defunct')) {
+            // lifecycle関連のエラーは無視
+            return;
+          }
+
+          if (!_isDisposed && mounted) {
+            debugPrint('Provider update error: $e');
+          }
+        }
+      }, (error, stackTrace) {
+        final errorMessage = error.toString();
+        if (errorMessage
+                .contains('_lifecycleState != _ElementLifecycle.defunct') ||
+            errorMessage.contains('markNeedsBuild') ||
+            errorMessage.contains('ConsumerStatefulElement') ||
+            errorMessage.contains('disposed') ||
+            errorMessage.contains('defunct')) {
+          return;
+        }
+
+        if (!_isDisposed && mounted) {
+          debugPrint('Provider update error: $error');
+        }
+      });
     });
   }
 
@@ -655,20 +769,22 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                 );
               } else {
                 return Center(
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      final permissionGranted =
-                          await _checkLocationPermission();
+                  child: !_mapCreated
+                      ? CircularProgressIndicator()
+                      : ElevatedButton(
+                          onPressed: () async {
+                            final permissionGranted =
+                                await _checkLocationPermission();
 
-                      // 権限が許可された場合にGoogleMapを再ビルド
-                      if (permissionGranted) {
-                        setState(() {
-                          _locationPermissionGranted = true;
-                        });
-                      }
-                    },
-                    child: Text(Config.allowLocationInformation),
-                  ),
+                            // 権限が許可された場合にGoogleMapを再ビルド
+                            if (permissionGranted) {
+                              setState(() {
+                                _locationPermissionGranted = true;
+                              });
+                            }
+                          },
+                          child: Text(Config.allowLocationInformation),
+                        ),
                 );
               }
             },
@@ -861,19 +977,34 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                     controller: _pageController,
                     itemCount: _markers.length,
                     onPageChanged: (index) async {
-                      final markerId = _markers.values.toList()[index].markerId;
-                      if (index != selectedIndex) {
-                        // 選択状態のマーカーを更新
-                        ref
-                            .read(selectedMarkerProvider.notifier)
-                            .selectMarker(markerId);
-                        // 選択した店舗のマーカーを変更
-                        _createCustomMarkers(markerId);
-                      }
-                      // スワイプ後のお店の座標までカメラを移動
-                      final shop = shops!.shops[index];
-                      _mapController.animateCamera(CameraUpdate.newLatLng(
-                          LatLng(shop.latitude, shop.longitude)));
+                      if (!mounted || _isDisposed) return;
+
+                      // 非同期で処理を実行し、UIの更新サイクルを避ける
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (!mounted || _isDisposed) return;
+
+                        final markerId =
+                            _markers.values.toList()[index].markerId;
+                        if (index != selectedIndex) {
+                          // 選択状態のマーカーを更新
+                          _safeProviderUpdate(() {
+                            if (!mounted || _isDisposed) return;
+                            ref
+                                .read(selectedMarkerProvider.notifier)
+                                .selectMarker(markerId);
+                          });
+                          // 選択した店舗のマーカーを変更
+                          _createCustomMarkers(markerId);
+                          // WebViewのURLをプレロード
+                          _preloadWebViewForMarker(markerId);
+                        }
+                        // スワイプ後のお店の座標までカメラを移動
+                        if (mounted && !_isDisposed) {
+                          final shop = shops!.shops[index];
+                          _mapController.animateCamera(CameraUpdate.newLatLng(
+                              LatLng(shop.latitude, shop.longitude)));
+                        }
+                      });
                     },
                     itemBuilder: (context, index) {
                       final shop = shops!.shops[index];
@@ -893,7 +1024,8 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                                     no: shop.no,
                                     shopId: shop.id.toInt(),
                                     shopName: shop.shopName,
-                                    address: shop.address);
+                                    address: shop.address,
+                                    preloadedController: _preloadController);
                               }),
                             ).then((onValue) async {
                               // 遷移先ページから戻ってきたあとの処理
@@ -1166,7 +1298,8 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                                                     no: shop.no,
                                                     shopId: shop.id.toInt(),
                                                     shopName: shop.shopName,
-                                                    address: shop.address);
+                                                    address: shop.address,
+                                                    preloadedController: null);
                                               }),
                                             ).then((onValue) async {
                                               // 遷移先ページから戻ってきたあとの処理
@@ -1300,6 +1433,10 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                                                           child:
                                                               GestureDetector(
                                                             onTap: () {
+                                                              if (!mounted ||
+                                                                  _isDisposed)
+                                                                return;
+
                                                               // 選択したマーカーIDを取得
                                                               final markerId =
                                                                   MarkerId(shop
@@ -1351,8 +1488,13 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                                                               });
                                                               _createCustomMarkers(
                                                                   markerId);
+                                                              // WebViewのURLをプレロード
+                                                              _preloadWebViewForMarker(
+                                                                  markerId);
 
-                                                              if (needsUpdateAnimateCamera) {
+                                                              if (needsUpdateAnimateCamera &&
+                                                                  mounted &&
+                                                                  !_isDisposed) {
                                                                 // スワイプ後のお店の座標までカメラを移動
                                                                 _mapController.animateCamera(
                                                                     CameraUpdate.newLatLng(LatLng(

@@ -16,6 +16,7 @@ class ShopDetailPage extends ConsumerStatefulWidget {
   final int shopId;
   final String shopName;
   final String address;
+  final WebViewController? preloadedController;
 
   const ShopDetailPage({
     super.key,
@@ -24,6 +25,7 @@ class ShopDetailPage extends ConsumerStatefulWidget {
     required this.shopId,
     required this.shopName,
     required this.address,
+    this.preloadedController,
   });
 
   @override
@@ -40,9 +42,12 @@ class _ShopPageDetail extends ConsumerState<ShopDetailPage> {
 
     final String webViewUrl =
         '${Config.eventBaseUrl}/${widget.year}/${widget.no}';
-    _controller = WebViewController()
-      ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setNavigationDelegate(NavigationDelegate(
+
+    // プレロードされたControllerがある場合はそれを使用、なければ新規作成
+    if (widget.preloadedController != null) {
+      _controller = widget.preloadedController!;
+      // プレロードされたControllerにページ完了コールバックを追加
+      _controller.setNavigationDelegate(NavigationDelegate(
         onNavigationRequest: (request) {
           if (request.url.contains('ads')) {
             return NavigationDecision.prevent;
@@ -54,8 +59,29 @@ class _ShopPageDetail extends ConsumerState<ShopDetailPage> {
             isLoading = false;
           });
         },
-      ))
-      ..loadRequest(Uri.parse(webViewUrl));
+      ));
+      // プレロードが完了している可能性があるため、ローディング状態をチェック
+      setState(() {
+        isLoading = false;
+      });
+    } else {
+      _controller = WebViewController()
+        ..setJavaScriptMode(JavaScriptMode.unrestricted)
+        ..setNavigationDelegate(NavigationDelegate(
+          onNavigationRequest: (request) {
+            if (request.url.contains('ads')) {
+              return NavigationDecision.prevent;
+            }
+            return NavigationDecision.navigate;
+          },
+          onPageFinished: (_) {
+            setState(() {
+              isLoading = false;
+            });
+          },
+        ))
+        ..loadRequest(Uri.parse(webViewUrl));
+    }
   }
 
   @override

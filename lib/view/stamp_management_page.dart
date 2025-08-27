@@ -3,6 +3,7 @@ import 'package:egp_client/service/grpc_service.dart';
 import 'package:egp_client/view/shop_detail_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
 import '../common/util.dart';
 import '../service/auth_service.dart';
@@ -18,6 +19,8 @@ class StampManagementPage extends ConsumerStatefulWidget {
 }
 
 class _StampManagementPageState extends ConsumerState<StampManagementPage> {
+  final Map<String, WebViewController> _preloadControllers = {};
+
   Future<ShopsResponse> _fetchShops(String userId) async {
     return await GrpcService.getShops(userId, []);
   }
@@ -27,6 +30,43 @@ class _StampManagementPageState extends ConsumerState<StampManagementPage> {
     Config.stampNumLabelTotal,
   ];
   String selectedValue = Config.stampNumLabelPerShop;
+
+  void _preloadAllShops(List<Shop> shops) {
+    // 少し遅延させてからプレロードを開始（初期表示の邪魔をしないため）
+    Future.delayed(const Duration(milliseconds: 500), () {
+      for (final shop in shops) {
+        _preloadWebViewForShop(shop);
+        // CPU負荷を軽減するため、各プレロード間に少し間隔をあける
+        Future.delayed(const Duration(milliseconds: 100));
+      }
+    });
+  }
+
+  void _preloadWebViewForShop(Shop shop) {
+    final shopId = shop.id.toString();
+    final String webViewUrl = '${Config.eventBaseUrl}/${shop.year}/${shop.no}';
+
+    // 既存のControllerがある場合は再利用、なければ新規作成
+    if (!_preloadControllers.containsKey(shopId)) {
+      _preloadControllers[shopId] = WebViewController()
+        ..setJavaScriptMode(JavaScriptMode.unrestricted)
+        ..setNavigationDelegate(NavigationDelegate(
+          onNavigationRequest: (request) {
+            if (request.url.contains('ads')) {
+              return NavigationDecision.prevent;
+            }
+            return NavigationDecision.navigate;
+          },
+        ))
+        ..loadRequest(Uri.parse(webViewUrl));
+    }
+  }
+
+  @override
+  void dispose() {
+    _preloadControllers.clear();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -56,6 +96,11 @@ class _StampManagementPageState extends ConsumerState<StampManagementPage> {
                     .map((shop) => shop.numberOfTimes)
                     .reduce((a, b) => a + b);
           }
+
+          // データが読み込まれたらプレロードを開始
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _preloadAllShops(data.shops.toList());
+          });
 
           return Column(
             children: [
@@ -126,6 +171,7 @@ class _StampManagementPageState extends ConsumerState<StampManagementPage> {
                   itemCount: data.shops.length,
                   itemBuilder: (context, index) {
                     final shop = data.shops.toList()[index];
+                    final shopId = shop.id.toString();
                     return GestureDetector(
                       onTap: () async {
                         await Navigator.of(context).push<bool>(
@@ -135,14 +181,26 @@ class _StampManagementPageState extends ConsumerState<StampManagementPage> {
                                 no: shop.no,
                                 shopId: shop.id.toInt(),
                                 shopName: shop.shopName,
-                                address: shop.address);
+                                address: shop.address,
+                                preloadedController:
+                                    _preloadControllers[shopId]);
                           }),
                         ).then((onValue) {
                           // 遷移先ページから戻ってきたあとの処理
                           setState(() {});
                         });
                       },
-                      child: StampCard(userId: userId, shop: shop),
+                      onLongPress: () {
+                        // 長押しでプレロードを開始
+                        _preloadWebViewForShop(shop);
+                      },
+                      child: MouseRegion(
+                        onEnter: (_) {
+                          // マウスホバー時にプレロードを開始（デスクトップ環境用）
+                          _preloadWebViewForShop(shop);
+                        },
+                        child: StampCard(userId: userId, shop: shop),
+                      ),
                     );
                   },
                 ),
