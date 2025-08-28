@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../common/util.dart';
 import '../service/auth_service.dart';
+import '../service/webview_preload_service.dart';
 import '../widget/stamp_card_widget.dart';
 import '../const/config.dart';
 
@@ -128,6 +129,13 @@ class _StampManagementPageState extends ConsumerState<StampManagementPage> {
                     final shop = data.shops.toList()[index];
                     return GestureDetector(
                       onTap: () async {
+                        final webViewService = WebViewPreloadService();
+                        final url =
+                            '${Config.eventBaseUrl}/${shop.year}/${shop.no}';
+
+                        await webViewService
+                            .preloadUrls([url], priorityLoad: true);
+
                         await Navigator.of(context).push<bool>(
                           MaterialPageRoute(builder: (context) {
                             return ShopDetailPage(
@@ -138,7 +146,6 @@ class _StampManagementPageState extends ConsumerState<StampManagementPage> {
                                 address: shop.address);
                           }),
                         ).then((onValue) {
-                          // 遷移先ページから戻ってきたあとの処理
                           setState(() {});
                         });
                       },

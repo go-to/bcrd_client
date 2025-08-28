@@ -20,6 +20,7 @@ import '../provider/marker_provider.dart';
 import '../provider/shop_provider.dart';
 import '../service/shop_service.dart';
 import '../service/marker_cache_service.dart';
+import '../service/webview_preload_service.dart';
 import '../view/shop_detail_page.dart';
 import '../icon/custom_icons.dart' as custom_icon;
 
@@ -862,6 +863,15 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                     itemCount: _markers.length,
                     onPageChanged: (index) async {
                       final markerId = _markers.values.toList()[index].markerId;
+                      final shop = shops!.shops[index];
+
+                      // Cardがアクティブになったタイミングでプレロード
+                      final webViewService = WebViewPreloadService();
+                      final url =
+                          '${Config.eventBaseUrl}/${shop.year}/${shop.no}';
+                      await webViewService
+                          .preloadUrls([url], priorityLoad: true);
+
                       if (index != selectedIndex) {
                         // 選択状態のマーカーを更新
                         ref
@@ -871,7 +881,6 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                         _createCustomMarkers(markerId);
                       }
                       // スワイプ後のお店の座標までカメラを移動
-                      final shop = shops!.shops[index];
                       _mapController.animateCamera(CameraUpdate.newLatLng(
                           LatLng(shop.latitude, shop.longitude)));
                     },
@@ -885,9 +894,17 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                       };
                       return GestureDetector(
                           onTap: () async {
+                            final webViewService = WebViewPreloadService();
+                            final shop = shops.shops.elementAt(index);
+                            final url =
+                                '${Config.eventBaseUrl}/${shop.year}/${shop.no}';
+
+                            await webViewService
+                                .preloadUrls([url], priorityLoad: true);
+
+                            if (!mounted) return;
                             await Navigator.of(context).push<bool>(
                               MaterialPageRoute(builder: (context) {
-                                final shop = shops.shops.elementAt(index);
                                 return ShopDetailPage(
                                     year: shop.year,
                                     no: shop.no,
@@ -896,8 +913,6 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                                     address: shop.address);
                               }),
                             ).then((onValue) async {
-                              // 遷移先ページから戻ってきたあとの処理
-                              // 店舗情報を取得
                               _searchShops(false);
                             });
                           },
@@ -1155,12 +1170,22 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                                         };
                                         return GestureDetector(
                                           onTap: () async {
+                                            final webViewService =
+                                                WebViewPreloadService();
+                                            final shop =
+                                                shops.shops.elementAt(index);
+                                            final url =
+                                                '${Config.eventBaseUrl}/${shop.year}/${shop.no}';
+
+                                            await webViewService.preloadUrls(
+                                                [url],
+                                                priorityLoad: true);
+
+                                            if (!mounted) return;
                                             await Navigator.of(context)
                                                 .push<bool>(
                                               MaterialPageRoute(
                                                   builder: (context) {
-                                                final shop = shops.shops
-                                                    .elementAt(index);
                                                 return ShopDetailPage(
                                                     year: shop.year,
                                                     no: shop.no,
@@ -1169,8 +1194,6 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                                                     address: shop.address);
                                               }),
                                             ).then((onValue) async {
-                                              // 遷移先ページから戻ってきたあとの処理
-                                              // 店舗情報を取得
                                               _searchShops(false);
                                             });
                                           },
@@ -1299,7 +1322,18 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                                                           left: 6,
                                                           child:
                                                               GestureDetector(
-                                                            onTap: () {
+                                                            onTap: () async {
+                                                              // Cardがアクティブになったタイミングでプレロード
+                                                              final webViewService =
+                                                                  WebViewPreloadService();
+                                                              final url =
+                                                                  '${Config.eventBaseUrl}/${shop.year}/${shop.no}';
+                                                              await webViewService
+                                                                  .preloadUrls(
+                                                                      [url],
+                                                                      priorityLoad:
+                                                                          true);
+
                                                               // 選択したマーカーIDを取得
                                                               final markerId =
                                                                   MarkerId(shop

@@ -28,34 +28,6 @@ Future<void> _initializeOptimizationServices() async {
     WebViewPreloadService().initialize(),
     WebViewCacheManager().initialize(),
   ]);
-
-  _preloadCommonResources();
-}
-
-void _preloadCommonResources() {
-  Future.delayed(Duration(seconds: 2), () async {
-    final webViewService = WebViewPreloadService();
-    final cacheManager = WebViewCacheManager();
-
-    final currentYear = DateTime.now().year;
-    final targetYears = [
-      currentYear,
-      currentYear - 1,
-      // currentYear - 2,
-    ];
-
-    final urlsToPreload = <String>[];
-
-    for (final year in targetYears) {
-      for (int shopNo = 1; shopNo <= 150; shopNo++) {
-        final url = '${Config.eventBaseUrl}/$year/$shopNo';
-        urlsToPreload.add(url);
-      }
-    }
-
-    await webViewService.preloadUrls(urlsToPreload);
-    await cacheManager.preloadCommonUrls(urlsToPreload);
-  });
 }
 
 class MyApp extends ConsumerWidget {
