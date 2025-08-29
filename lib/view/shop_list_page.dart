@@ -455,8 +455,9 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
     // キャッシュクリア（メモリリークを防ぐため）
     MarkerCacheService().clearCache();
     _locationUpdateTimer?.cancel();
-    _scrollController.dispose();
-    _draggableController.dispose();
+    if (_draggableController.isAttached) {
+      _draggableController.dispose();
+    }
     _pageController.dispose();
     _searchController.dispose();
     _mapController.dispose();
