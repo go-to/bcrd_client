@@ -152,9 +152,6 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
       _setCustomMarkers(shops);
       final tempMarkers = shops.shops.map(_createTempMarker).toList();
       _updateMarkers(tempMarkers);
-
-      // カスタムマーカー生成
-      _createCustomMarkers();
     }
   }
 
@@ -765,7 +762,7 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
               } else {
                 return Center(
                   child: !_mapCreated
-                      ? CircularProgressIndicator()
+                      ? const CircularProgressIndicator()
                       : ElevatedButton(
                           onPressed: () async {
                             final permissionGranted =
@@ -778,7 +775,7 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                               });
                             }
                           },
-                          child: Text(Config.allowLocationInformation),
+                          child: const Text(Config.allowLocationInformation),
                         ),
                 );
               }
@@ -1452,14 +1449,14 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
 
                                                               // Cardがアクティブになったタイミングでプレロード
                                                               final webViewService =
-                                                              WebViewPreloadService();
+                                                                  WebViewPreloadService();
                                                               final url =
                                                                   '${Config.eventBaseUrl}/${shop.year}/${shop.no}';
                                                               await webViewService
                                                                   .preloadUrls(
-                                                                  [url],
-                                                                  priorityLoad:
-                                                                  true);
+                                                                      [url],
+                                                                      priorityLoad:
+                                                                          true);
 
                                                               // 選択したマーカーIDを取得
                                                               final markerId =

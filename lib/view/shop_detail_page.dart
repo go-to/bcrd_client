@@ -54,7 +54,7 @@ class _ShopPageDetail extends ConsumerState<ShopDetailPage> {
 
     // プレウォーム済みコントローラーがあるかチェック
     final preloadedController =
-    WebViewPreloadService().getPreloadedController(webViewUrl);
+        WebViewPreloadService().getPreloadedController(webViewUrl);
 
     // プレロードされたControllerがある場合はそれを使用、なければ新規作成
     if (preloadedController != null) {
@@ -80,7 +80,7 @@ class _ShopPageDetail extends ConsumerState<ShopDetailPage> {
       ..enableZoom(false)
       ..setNavigationDelegate(_createNavigationDelegate())
       ..setUserAgent('EbisuGP-Mobile-App/1.0 (Android; Mobile)')
-    // パフォーマンス最適化設定
+      // パフォーマンス最適化設定
       ..clearCache()
       ..clearLocalStorage();
   }
