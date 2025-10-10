@@ -230,9 +230,7 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
 
             // ボトムシートの高さを初期状態に戻す
             _resetBottomSheet();
-            _safeProviderUpdate(() {
-              ref.read(selectedMarkerProvider.notifier).selectMarker(markerId);
-            });
+            ref.read(selectedMarkerProvider.notifier).selectMarker(markerId);
             _createCustomMarkers(markerId);
             // WebViewのURLをプレロード
             _preloadWebViewForMarker(markerId);
@@ -680,9 +678,7 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
       _createCustomMarkers(selectedMarkerId);
     }
     // マーカーの選択状態を解除
-    _safeProviderUpdate(() {
-      ref.read(selectedMarkerProvider.notifier).clearSelection();
-    });
+    ref.read(selectedMarkerProvider.notifier).clearSelection();
 
     // ボトムシートのスクロール位置を先頭に戻す
     if (needsBottomSheetScrollPosition! && _scrollController.hasClients) {
@@ -699,9 +695,7 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
     final query = _searchController.text.trim();
 
     // 検索キーワードを設定
-    _safeProviderUpdate(() {
-      ref.read(searchKeywordProvider.notifier).setSearchKeyword(query);
-    });
+    ref.read(searchKeywordProvider.notifier).setSearchKeyword(query);
 
     // 店舗情報を取得
     if (mounted) {
@@ -987,12 +981,10 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                             _markers.values.toList()[index].markerId;
                         if (index != selectedIndex) {
                           // 選択状態のマーカーを更新
-                          _safeProviderUpdate(() {
-                            if (!mounted || _isDisposed) return;
-                            ref
-                                .read(selectedMarkerProvider.notifier)
-                                .selectMarker(markerId);
-                          });
+                          if (!mounted || _isDisposed) return;
+                          ref
+                              .read(selectedMarkerProvider.notifier)
+                              .selectMarker(markerId);
                           // 選択した店舗のマーカーを変更
                           _createCustomMarkers(markerId);
                           // WebViewのURLをプレロード
@@ -1246,11 +1238,9 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                                   onChanged: (value) {
                                     if (value != null) {
                                       // ソート順を設定
-                                      _safeProviderUpdate(() {
-                                        ref
-                                            .read(sortOrderProvider.notifier)
-                                            .setSortOrder(value);
-                                      });
+                                      ref
+                                          .read(sortOrderProvider.notifier)
+                                          .setSortOrder(value);
                                       // 店舗情報を取得
                                       if (mounted) {
                                         _searchShops();
@@ -1478,14 +1468,11 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
 
                                                               // ボトムシートの高さを初期状態に戻す
                                                               _resetBottomSheet();
-                                                              _safeProviderUpdate(
-                                                                  () {
-                                                                ref
-                                                                    .read(selectedMarkerProvider
-                                                                        .notifier)
-                                                                    .selectMarker(
-                                                                        markerId);
-                                                              });
+                                                              ref
+                                                                  .read(selectedMarkerProvider
+                                                                      .notifier)
+                                                                  .selectMarker(
+                                                                      markerId);
                                                               _createCustomMarkers(
                                                                   markerId);
                                                               // WebViewのURLをプレロード
@@ -1649,14 +1636,12 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
       onPressed: () async {
         if (!mounted) return;
 
-        _safeProviderUpdate(() {
-          // ボタンの選択状態を設定
-          ref
-              .read(searchConditionProvider.notifier)
-              .setSearchCondition(searchKey);
-          // 検索キーワードを設定
-          ref.read(searchKeywordProvider.notifier).setSearchKeyword(keyword);
-        });
+        // ボタンの選択状態を設定
+        ref
+            .read(searchConditionProvider.notifier)
+            .setSearchCondition(searchKey);
+        // 検索キーワードを設定
+        ref.read(searchKeywordProvider.notifier).setSearchKeyword(keyword);
 
         // 店舗情報を取得
         if (mounted) {
