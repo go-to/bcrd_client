@@ -19,6 +19,7 @@ class ShopDetailPage extends ConsumerStatefulWidget {
   final int shopId;
   final String shopName;
   final String address;
+  final WebViewController? preloadedController;
 
   const ShopDetailPage({
     super.key,
@@ -27,6 +28,7 @@ class ShopDetailPage extends ConsumerStatefulWidget {
     required this.shopId,
     required this.shopName,
     required this.address,
+    this.preloadedController,
   });
 
   @override
@@ -52,8 +54,9 @@ class _ShopPageDetail extends ConsumerState<ShopDetailPage> {
 
     // プレウォーム済みコントローラーがあるかチェック
     final preloadedController =
-        WebViewPreloadService().getPreloadedController(webViewUrl);
+    WebViewPreloadService().getPreloadedController(webViewUrl);
 
+    // プレロードされたControllerがある場合はそれを使用、なければ新規作成
     if (preloadedController != null) {
       // プレロード済み - 即座に表示可能
       _controller = preloadedController;
@@ -77,7 +80,7 @@ class _ShopPageDetail extends ConsumerState<ShopDetailPage> {
       ..enableZoom(false)
       ..setNavigationDelegate(_createNavigationDelegate())
       ..setUserAgent('EbisuGP-Mobile-App/1.0 (Android; Mobile)')
-      // パフォーマンス最適化設定
+    // パフォーマンス最適化設定
       ..clearCache()
       ..clearLocalStorage();
   }
