@@ -1,5 +1,5 @@
-import 'package:egp_client/service/shop_service.dart';
-import 'package:egp_client/service/stamp_service.dart';
+import 'package:bcrd_client/service/shop_service.dart';
+import 'package:bcrd_client/service/stamp_service.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 

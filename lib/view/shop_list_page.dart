@@ -3,10 +3,10 @@ import 'dart:collection';
 import 'dart:core';
 import 'dart:ui' as ui;
 
-import 'package:egp_client/grpc_gen/egp.pb.dart';
-import 'package:egp_client/provider/search_condition_provider.dart';
-import 'package:egp_client/provider/search_keyword_provider.dart';
-import 'package:egp_client/provider/sort_order_provider.dart';
+import 'package:bcrd_client/grpc_gen/bcrd.pb.dart';
+import 'package:bcrd_client/provider/search_condition_provider.dart';
+import 'package:bcrd_client/provider/search_keyword_provider.dart';
+import 'package:bcrd_client/provider/sort_order_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,7 +16,7 @@ import 'package:webview_flutter/webview_flutter.dart';
 
 import '../common/util.dart';
 import '../const/config.dart';
-import '../grpc_gen/egp.pb.dart' as pb;
+import '../grpc_gen/bcrd.pb.dart' as pb;
 import '../provider/marker_provider.dart';
 import '../provider/shop_provider.dart';
 import '../service/shop_service.dart';
@@ -27,27 +27,21 @@ import '../icon/custom_icons.dart' as custom_icon;
 class CustomMarker {
   final String id;
   final int no;
-  final CategoryType categoryId;
   final LatLng position;
   final double zIndex;
   final bool inCurrentSales;
   final bool isStamped;
   final bool isIrregularHoliday;
-  final bool needsReservation;
-  final String imageUrl;
   BitmapDescriptor? icon;
 
   CustomMarker({
     required this.id,
     required this.no,
-    required this.categoryId,
     required this.position,
     required this.zIndex,
     required this.inCurrentSales,
     required this.isStamped,
     required this.isIrregularHoliday,
-    required this.needsReservation,
-    required this.imageUrl,
     this.icon,
   });
 }
@@ -244,14 +238,11 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
         CustomMarker(
           id: shop.id.toString(),
           no: shop.no,
-          categoryId: shop.categoryId,
           position: LatLng(shop.latitude, shop.longitude),
           zIndex: 0.0,
           inCurrentSales: shop.inCurrentSales,
           isStamped: shop.isStamped,
           isIrregularHoliday: shop.isIrregularHoliday,
-          needsReservation: shop.normalizedNeedsReservation,
-          imageUrl: shop.menuImageUrl,
           icon: shopDefaultIcon,
         ),
       );
@@ -283,7 +274,7 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
   }
 
   String _generateMarkerCacheKey(CustomMarker marker, bool isSelected) {
-    return '${marker.id}_${marker.no}_${marker.categoryId}_${marker.inCurrentSales}_${marker.isStamped}_${marker.isIrregularHoliday}_${marker.needsReservation}_$isSelected';
+    return '${marker.id}_${marker.no}_${marker.inCurrentSales}_${marker.isStamped}_${marker.isIrregularHoliday}_$isSelected';
   }
 
   Future<BitmapDescriptor> _generateCustomIcon(CustomMarker marker,
@@ -309,22 +300,16 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
       // 営業時間内
       if (marker.inCurrentSales) {
         textColor = Colors.black;
-        // 要予約
-        if (marker.needsReservation) {
-          textLabel = Config.needsReservation;
-        } else if (marker.isIrregularHoliday) {
-          // 不定休
+        // 不定休
+        if (marker.isIrregularHoliday) {
           textLabel = Config.irregularHoliday;
         }
       }
       // 営業時間内
     } else if (marker.inCurrentSales) {
       textColor = Colors.black;
-      // 要予約
-      if (marker.needsReservation) {
-        textLabel = Config.needsReservation;
-        // 不定休
-      } else if (marker.isIrregularHoliday) {
+      // 不定休
+      if (marker.isIrregularHoliday) {
         textLabel = Config.irregularHoliday;
       }
     }
@@ -396,8 +381,7 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
 
       // 通常営業以外の場合は情報を描画
       if (!marker.inCurrentSales ||
-          marker.isIrregularHoliday ||
-          marker.needsReservation) {
+          marker.isIrregularHoliday) {
         final textPainter = TextPainter(
           text: TextSpan(
             text: textLabel,
@@ -421,26 +405,6 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
 
     // 枠線にカテゴリの色を表示
     Color borderColor = Colors.black;
-    switch (marker.categoryId) {
-      case CategoryType.CATEGORY_TYPE_BEER_COCKTAIL:
-        borderColor = Color(0xFF494967);
-        break;
-      case CategoryType.CATEGORY_TYPE_EBISU_1:
-        borderColor = Color(0xFF7456D9);
-        break;
-      case CategoryType.CATEGORY_TYPE_EBISU_2:
-        borderColor = Color(0xFF8BC0F0);
-        break;
-      case CategoryType.CATEGORY_TYPE_EBISU_SOUTH:
-        borderColor = Color(0xFFD59B60);
-        break;
-      case CategoryType.CATEGORY_TYPE_EBISU_WEST:
-        borderColor = Color(0xFFF0E157);
-        break;
-      case CategoryType.CATEGORY_TYPE_NONE:
-        borderColor = Color(0xFF454545);
-        break;
-    }
     // 枠線を描画
     final borderPaint = Paint()
       ..color = borderColor
@@ -998,10 +962,9 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                     itemBuilder: (context, index) {
                       final shop = shops!.shops[index];
                       final attributes = {
-                        Config.shopCardAttributeMenu: shop.menuName,
                         Config.shopCardAttributeAddress: shop.address,
-                        Config.shopCardAttributeBusinessHours:
-                            shop.businessHours,
+                        // Config.shopCardAttributeBusinessHours:
+                        //     shop.businessHours,
                       };
                       return GestureDetector(
                           onTap: () async {
@@ -1042,46 +1005,46 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     SizedBox(width: 8),
-                                    Expanded(
-                                      flex: 1,
-                                      child: ConstrainedBox(
-                                        constraints: BoxConstraints(
-                                          maxWidth: 100,
-                                          maxHeight: 100,
-                                        ),
-                                        child: ClipRRect(
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                          child: Image.network(
-                                            shop.menuImageUrl,
-                                            fit: BoxFit.contain,
-                                            loadingBuilder: (context, child,
-                                                loadingProgress) {
-                                              if (loadingProgress == null) {
-                                                return child;
-                                              }
-                                              return Center(
-                                                child:
-                                                    CircularProgressIndicator(
-                                                  value: loadingProgress
-                                                              .expectedTotalBytes !=
-                                                          null
-                                                      ? loadingProgress
-                                                              .cumulativeBytesLoaded /
-                                                          loadingProgress
-                                                              .expectedTotalBytes!
-                                                      : null,
-                                                ),
-                                              );
-                                            },
-                                            errorBuilder:
-                                                (context, error, stackTrace) {
-                                              return Icon(Icons.error);
-                                            },
-                                          ),
-                                        ),
-                                      ),
-                                    ),
+                                    // Expanded(
+                                    //   flex: 1,
+                                    //   child: ConstrainedBox(
+                                    //     constraints: BoxConstraints(
+                                    //       maxWidth: 100,
+                                    //       maxHeight: 100,
+                                    //     ),
+                                    //     child: ClipRRect(
+                                    //       borderRadius:
+                                    //           BorderRadius.circular(8),
+                                    //       child: Image.network(
+                                    //         shop.menuImageUrl,
+                                    //         fit: BoxFit.contain,
+                                    //         loadingBuilder: (context, child,
+                                    //             loadingProgress) {
+                                    //           if (loadingProgress == null) {
+                                    //             return child;
+                                    //           }
+                                    //           return Center(
+                                    //             child:
+                                    //                 CircularProgressIndicator(
+                                    //               value: loadingProgress
+                                    //                           .expectedTotalBytes !=
+                                    //                       null
+                                    //                   ? loadingProgress
+                                    //                           .cumulativeBytesLoaded /
+                                    //                       loadingProgress
+                                    //                           .expectedTotalBytes!
+                                    //                   : null,
+                                    //             ),
+                                    //           );
+                                    //         },
+                                    //         errorBuilder:
+                                    //             (context, error, stackTrace) {
+                                    //           return Icon(Icons.error);
+                                    //         },
+                                    //       ),
+                                    //     ),
+                                    //   ),
+                                    // ),
                                     Expanded(
                                       flex: 2,
                                       child: Padding(
@@ -1265,12 +1228,12 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                                         final shop =
                                             shops.shops.elementAt(index);
                                         final attributes = {
-                                          Config.shopCardAttributeMenu:
-                                              shop.menuName,
+                                          // Config.shopCardAttributeMenu:
+                                          //     shop.menuName,
                                           Config.shopCardAttributeAddress:
                                               shop.address,
-                                          Config.shopCardAttributeBusinessHours:
-                                              shop.businessHours,
+                                          // Config.shopCardAttributeBusinessHours:
+                                          //     shop.businessHours,
                                         };
                                         return GestureDetector(
                                           onTap: () async {
@@ -1311,44 +1274,44 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                                                     const SizedBox(height: 20),
                                                     Stack(
                                                       children: [
-                                                        ClipRRect(
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(8),
-                                                          child: Image.network(
-                                                            shop.menuImageUrl,
-                                                            fit: BoxFit.cover,
-                                                            height: 140,
-                                                            width: 160,
-                                                            loadingBuilder:
-                                                                (context, child,
-                                                                    loadingProgress) {
-                                                              if (loadingProgress ==
-                                                                  null) {
-                                                                return child;
-                                                              }
-                                                              return Center(
-                                                                child:
-                                                                    CircularProgressIndicator(
-                                                                  value: loadingProgress
-                                                                              .expectedTotalBytes !=
-                                                                          null
-                                                                      ? loadingProgress
-                                                                              .cumulativeBytesLoaded /
-                                                                          loadingProgress
-                                                                              .expectedTotalBytes!
-                                                                      : null,
-                                                                ),
-                                                              );
-                                                            },
-                                                            errorBuilder:
-                                                                (context, error,
-                                                                    stackTrace) {
-                                                              return Icon(
-                                                                  Icons.error);
-                                                            },
-                                                          ),
-                                                        ),
+                                                        // ClipRRect(
+                                                        //   borderRadius:
+                                                        //       BorderRadius
+                                                        //           .circular(8),
+                                                        //   child: Image.network(
+                                                        //     shop.menuImageUrl,
+                                                        //     fit: BoxFit.cover,
+                                                        //     height: 140,
+                                                        //     width: 160,
+                                                        //     loadingBuilder:
+                                                        //         (context, child,
+                                                        //             loadingProgress) {
+                                                        //       if (loadingProgress ==
+                                                        //           null) {
+                                                        //         return child;
+                                                        //       }
+                                                        //       return Center(
+                                                        //         child:
+                                                        //             CircularProgressIndicator(
+                                                        //           value: loadingProgress
+                                                        //                       .expectedTotalBytes !=
+                                                        //                   null
+                                                        //               ? loadingProgress
+                                                        //                       .cumulativeBytesLoaded /
+                                                        //                   loadingProgress
+                                                        //                       .expectedTotalBytes!
+                                                        //               : null,
+                                                        //         ),
+                                                        //       );
+                                                        //     },
+                                                        //     errorBuilder:
+                                                        //         (context, error,
+                                                        //             stackTrace) {
+                                                        //       return Icon(
+                                                        //           Icons.error);
+                                                        //     },
+                                                        //   ),
+                                                        // ),
                                                         // スタンプ押下済み
                                                         if (shop.isStamped)
                                                           Container(
@@ -1647,7 +1610,7 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
       },
       style: ElevatedButton.styleFrom(
         backgroundColor: selectedKeys.contains(searchKey)
-            ? Colors.amberAccent
+            ? Config.colorFromRGBOBcrdBase
             : colorScheme.surface,
       ),
       child: Text(label,

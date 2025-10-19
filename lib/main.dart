@@ -1,6 +1,6 @@
-import 'package:egp_client/provider/theme_notifier_provider.dart';
-import 'package:egp_client/view/auth_wrapper.dart';
-import 'package:egp_client/view/shop_detail_page.dart';
+import 'package:bcrd_client/provider/theme_notifier_provider.dart';
+import 'package:bcrd_client/view/auth_wrapper.dart';
+import 'package:bcrd_client/view/shop_detail_page.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';

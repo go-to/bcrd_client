@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../const/config.dart';
-import '../grpc_gen/egp.pb.dart';
+import '../grpc_gen/bcrd.pb.dart';
 
 class StampCard extends StatelessWidget {
   final String userId;

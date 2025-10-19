@@ -2,7 +2,7 @@ import 'dart:ui';
 
 class Config {
   // タイトル
-  static const String appTitle = 'ヱビスビールに合う逸品グランプリ';
+  static const String appTitle = 'バカルディハイボールスタンプラリー in 恵比寿';
 
   // メニュー
   static const String menuLabelShop = '店舗情報';
@@ -17,12 +17,11 @@ class Config {
   static const int locationUpdateIntervalMs = 30000; // 30秒間隔
   static const String googleMapStyleJsonPath =
       'assets/jsons/google_map_style.json';
-  static const String shopDefaultImagePath = 'assets/images/shop_default.png';
-  static const String shopOpenImagePath = 'assets/images/shop_open.png';
-  static const String shopSelectedImagePath = 'assets/images/shop_selected.png';
-  static const String isStampedImagePath = 'assets/images/done.png';
-  static const String isStampedSelectedImagePath =
-      'assets/images/done_selected.png';
+  static const String shopDefaultImagePath = 'assets/images/highball.png';
+  static const String shopOpenImagePath = 'assets/images/highball.png';
+  static const String shopSelectedImagePath = 'assets/images/highball.png';
+  static const String isStampedImagePath = 'assets/images/bacardi.png';
+  static const String isStampedSelectedImagePath = 'assets/images/bacardi.png';
   static const double shopImageWidth = 50;
   static const double shopImageHeight = 50;
   static const double shopSelectedImageWidth = 80;
@@ -75,8 +74,6 @@ class Config {
     0: '営業中',
     1: 'スタンプ未獲得',
     2: '不定休',
-    3: '完全予約制',
-    4: 'ビアカクテル部門',
   };
 
   // 並び順
@@ -149,6 +146,8 @@ class Config {
       Color.fromRGBO(255, 215, 64, 0.9); // #ffd740
   static final Color colorFromRGBOWhite =
       Color.fromRGBO(255, 255, 255, 0.9); // #ffffff
+  static final Color colorFromRGBOBcrdBase =
+      Color.fromRGBO(145, 187, 152, 0.9); // #91BB98
 
   // 文字サイズ
   static final double fontSizeVeryLarge = 36;

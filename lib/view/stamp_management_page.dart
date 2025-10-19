@@ -1,6 +1,6 @@
-import 'package:egp_client/grpc_gen/egp.pb.dart';
-import 'package:egp_client/service/grpc_service.dart';
-import 'package:egp_client/view/shop_detail_page.dart';
+import 'package:bcrd_client/grpc_gen/bcrd.pb.dart';
+import 'package:bcrd_client/service/grpc_service.dart';
+import 'package:bcrd_client/view/shop_detail_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:webview_flutter/webview_flutter.dart';

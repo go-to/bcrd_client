@@ -1,8 +1,8 @@
 import 'dart:core';
 
-import 'package:egp_client/view/setting_page.dart';
-import 'package:egp_client/view/shop_list_page.dart';
-import 'package:egp_client/view/stamp_management_page.dart';
+import 'package:bcrd_client/view/setting_page.dart';
+import 'package:bcrd_client/view/shop_list_page.dart';
+import 'package:bcrd_client/view/stamp_management_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -81,7 +81,7 @@ class _HomePageState extends ConsumerState<HomePage> {
       child: Container(
         width: buttonWidth,
         decoration: BoxDecoration(
-          color: isSelected ? Colors.amberAccent : colorScheme.surface,
+          color: isSelected ? Config.colorFromRGBOBcrdBase : colorScheme.surface,
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

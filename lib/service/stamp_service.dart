@@ -3,7 +3,7 @@ import 'package:grpc/grpc.dart';
 
 import '../common/util.dart';
 import '../const/config.dart';
-import '../grpc_gen/egp.pbgrpc.dart';
+import '../grpc_gen/bcrd.pbgrpc.dart';
 import 'grpc_service.dart';
 
 class StampService {
