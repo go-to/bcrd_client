@@ -305,6 +305,9 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
           textLabel = Config.irregularHoliday;
         }
       }
+      final bgPaint = Paint()
+        ..color = Config.colorFromRGBOBcrdDeep.withAlpha(200);
+      canvas.drawCircle(Offset(size / 2, size / 2), size / 2, bgPaint);
       // 営業時間内
     } else if (marker.inCurrentSales) {
       textColor = Colors.black;
@@ -380,8 +383,7 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
       );
 
       // 通常営業以外の場合は情報を描画
-      if (!marker.inCurrentSales ||
-          marker.isIrregularHoliday) {
+      if (!marker.inCurrentSales || marker.isIrregularHoliday) {
         final textPainter = TextPainter(
           text: TextSpan(
             text: textLabel,
@@ -404,7 +406,7 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
     }
 
     // 枠線にカテゴリの色を表示
-    Color borderColor = Colors.black;
+    Color borderColor = Config.colorFromRGBOBcrdBase;
     // 枠線を描画
     final borderPaint = Paint()
       ..color = borderColor
@@ -440,8 +442,16 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
           orElse: () => shops.shops.first,
         );
 
-        final String webViewUrl =
-            '${Config.eventBaseUrl}/${shop.year}/${shop.no}';
+        var webviewUrl = '';
+        if (shop.googleUrl != '') {
+          webviewUrl = shop.googleUrl;
+        }
+        if (shop.tabelogUrl != '') {
+          webviewUrl = shop.tabelogUrl;
+        }
+        // if (shop.instagramUrl != '') {
+        //   webviewUrl = shop.instagramUrl;
+        // }
 
         // 既存のWebViewControllerを破棄
         _preloadController = null;
@@ -457,7 +467,7 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
               return NavigationDecision.navigate;
             },
           ))
-          ..loadRequest(Uri.parse(webViewUrl));
+          ..loadRequest(Uri.parse(webviewUrl));
       }
     });
   }
@@ -971,12 +981,24 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                             await Navigator.of(context).push<bool>(
                               MaterialPageRoute(builder: (context) {
                                 final shop = shops.shops.elementAt(index);
+                                var webviewUrl = '';
+                                if (shop.googleUrl != '') {
+                                  webviewUrl = shop.googleUrl;
+                                }
+                                if (shop.tabelogUrl != '') {
+                                  webviewUrl = shop.tabelogUrl;
+                                }
+                                // if (shop.instagramUrl != '') {
+                                //   webviewUrl = shop.instagramUrl;
+                                // }
+
                                 return ShopDetailPage(
                                     year: shop.year,
                                     no: shop.no,
                                     shopId: shop.id.toInt(),
                                     shopName: shop.shopName,
                                     address: shop.address,
+                                    webviewUrl: webviewUrl,
                                     preloadedController: _preloadController);
                               }),
                             ).then((onValue) async {
@@ -1005,46 +1027,46 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     SizedBox(width: 8),
-                                    // Expanded(
-                                    //   flex: 1,
-                                    //   child: ConstrainedBox(
-                                    //     constraints: BoxConstraints(
-                                    //       maxWidth: 100,
-                                    //       maxHeight: 100,
-                                    //     ),
-                                    //     child: ClipRRect(
-                                    //       borderRadius:
-                                    //           BorderRadius.circular(8),
-                                    //       child: Image.network(
-                                    //         shop.menuImageUrl,
-                                    //         fit: BoxFit.contain,
-                                    //         loadingBuilder: (context, child,
-                                    //             loadingProgress) {
-                                    //           if (loadingProgress == null) {
-                                    //             return child;
-                                    //           }
-                                    //           return Center(
-                                    //             child:
-                                    //                 CircularProgressIndicator(
-                                    //               value: loadingProgress
-                                    //                           .expectedTotalBytes !=
-                                    //                       null
-                                    //                   ? loadingProgress
-                                    //                           .cumulativeBytesLoaded /
-                                    //                       loadingProgress
-                                    //                           .expectedTotalBytes!
-                                    //                   : null,
-                                    //             ),
-                                    //           );
-                                    //         },
-                                    //         errorBuilder:
-                                    //             (context, error, stackTrace) {
-                                    //           return Icon(Icons.error);
-                                    //         },
-                                    //       ),
-                                    //     ),
-                                    //   ),
-                                    // ),
+                                    Expanded(
+                                      flex: 1,
+                                      child: ConstrainedBox(
+                                        constraints: BoxConstraints(
+                                          maxWidth: 100,
+                                          maxHeight: 100,
+                                        ),
+                                        child: ClipRRect(
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                          child: Image.network(
+                                            shop.imageUrl,
+                                            fit: BoxFit.contain,
+                                            loadingBuilder: (context, child,
+                                                loadingProgress) {
+                                              if (loadingProgress == null) {
+                                                return child;
+                                              }
+                                              return Center(
+                                                child:
+                                                    CircularProgressIndicator(
+                                                  value: loadingProgress
+                                                              .expectedTotalBytes !=
+                                                          null
+                                                      ? loadingProgress
+                                                              .cumulativeBytesLoaded /
+                                                          loadingProgress
+                                                              .expectedTotalBytes!
+                                                      : null,
+                                                ),
+                                              );
+                                            },
+                                            errorBuilder:
+                                                (context, error, stackTrace) {
+                                              return Icon(Icons.error);
+                                            },
+                                          ),
+                                        ),
+                                      ),
+                                    ),
                                     Expanded(
                                       flex: 2,
                                       child: Padding(
@@ -1243,12 +1265,25 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                                                   builder: (context) {
                                                 final shop = shops.shops
                                                     .elementAt(index);
+                                                var webviewUrl = '';
+                                                if (shop.googleUrl != '') {
+                                                  webviewUrl = shop.googleUrl;
+                                                }
+                                                if (shop.tabelogUrl != '') {
+                                                  webviewUrl = shop.tabelogUrl;
+                                                }
+                                                // if (shop.instagramUrl != '') {
+                                                //   webviewUrl =
+                                                //       shop.instagramUrl;
+                                                // }
+
                                                 return ShopDetailPage(
                                                     year: shop.year,
                                                     no: shop.no,
                                                     shopId: shop.id.toInt(),
                                                     shopName: shop.shopName,
                                                     address: shop.address,
+                                                    webviewUrl: webviewUrl,
                                                     preloadedController: null);
                                               }),
                                             ).then((onValue) async {
@@ -1274,44 +1309,44 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                                                     const SizedBox(height: 20),
                                                     Stack(
                                                       children: [
-                                                        // ClipRRect(
-                                                        //   borderRadius:
-                                                        //       BorderRadius
-                                                        //           .circular(8),
-                                                        //   child: Image.network(
-                                                        //     shop.menuImageUrl,
-                                                        //     fit: BoxFit.cover,
-                                                        //     height: 140,
-                                                        //     width: 160,
-                                                        //     loadingBuilder:
-                                                        //         (context, child,
-                                                        //             loadingProgress) {
-                                                        //       if (loadingProgress ==
-                                                        //           null) {
-                                                        //         return child;
-                                                        //       }
-                                                        //       return Center(
-                                                        //         child:
-                                                        //             CircularProgressIndicator(
-                                                        //           value: loadingProgress
-                                                        //                       .expectedTotalBytes !=
-                                                        //                   null
-                                                        //               ? loadingProgress
-                                                        //                       .cumulativeBytesLoaded /
-                                                        //                   loadingProgress
-                                                        //                       .expectedTotalBytes!
-                                                        //               : null,
-                                                        //         ),
-                                                        //       );
-                                                        //     },
-                                                        //     errorBuilder:
-                                                        //         (context, error,
-                                                        //             stackTrace) {
-                                                        //       return Icon(
-                                                        //           Icons.error);
-                                                        //     },
-                                                        //   ),
-                                                        // ),
+                                                        ClipRRect(
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(8),
+                                                          child: Image.network(
+                                                            shop.imageUrl,
+                                                            fit: BoxFit.cover,
+                                                            height: 140,
+                                                            width: 160,
+                                                            loadingBuilder:
+                                                                (context, child,
+                                                                    loadingProgress) {
+                                                              if (loadingProgress ==
+                                                                  null) {
+                                                                return child;
+                                                              }
+                                                              return Center(
+                                                                child:
+                                                                    CircularProgressIndicator(
+                                                                  value: loadingProgress
+                                                                              .expectedTotalBytes !=
+                                                                          null
+                                                                      ? loadingProgress
+                                                                              .cumulativeBytesLoaded /
+                                                                          loadingProgress
+                                                                              .expectedTotalBytes!
+                                                                      : null,
+                                                                ),
+                                                              );
+                                                            },
+                                                            errorBuilder:
+                                                                (context, error,
+                                                                    stackTrace) {
+                                                              return Icon(
+                                                                  Icons.error);
+                                                            },
+                                                          ),
+                                                        ),
                                                         // スタンプ押下済み
                                                         if (shop.isStamped)
                                                           Container(

@@ -148,6 +148,8 @@ class Config {
       Color.fromRGBO(255, 255, 255, 0.9); // #ffffff
   static final Color colorFromRGBOBcrdBase =
       Color.fromRGBO(145, 187, 152, 0.9); // #91BB98
+  static final Color colorFromRGBOBcrdDeep =
+      Color.fromRGBO(45, 82, 40, 0.9); // #91BB98
 
   // 文字サイズ
   static final double fontSizeVeryLarge = 36;

@@ -60,6 +60,7 @@ class MyApp extends ConsumerWidget {
               shopId: 0,
               shopName: '',
               address: '',
+              webviewUrl: '',
             ),
       },
       debugShowCheckedModeBanner: false,

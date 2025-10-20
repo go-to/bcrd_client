@@ -16,6 +16,7 @@ class ShopDetailPage extends ConsumerStatefulWidget {
   final int shopId;
   final String shopName;
   final String address;
+  final String webviewUrl;
   final WebViewController? preloadedController;
 
   const ShopDetailPage({
@@ -25,6 +26,7 @@ class ShopDetailPage extends ConsumerStatefulWidget {
     required this.shopId,
     required this.shopName,
     required this.address,
+    required this.webviewUrl,
     this.preloadedController,
   });
 
@@ -40,8 +42,7 @@ class _ShopPageDetail extends ConsumerState<ShopDetailPage> {
   void initState() {
     super.initState();
 
-    final String webViewUrl =
-        '${Config.eventBaseUrl}/${widget.year}/${widget.no}';
+    final String webViewUrl = widget.webviewUrl;
 
     // プレロードされたControllerがある場合はそれを使用、なければ新規作成
     if (widget.preloadedController != null) {

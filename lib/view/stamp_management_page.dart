@@ -176,12 +176,24 @@ class _StampManagementPageState extends ConsumerState<StampManagementPage> {
                       onTap: () async {
                         await Navigator.of(context).push<bool>(
                           MaterialPageRoute(builder: (context) {
+                            var webviewUrl = '';
+                            if (shop.googleUrl != '') {
+                              webviewUrl = shop.googleUrl;
+                            }
+                            if (shop.tabelogUrl != '') {
+                              webviewUrl = shop.tabelogUrl;
+                            }
+                            // if (shop.instagramUrl != '') {
+                            //   webviewUrl = shop.instagramUrl;
+                            // }
+
                             return ShopDetailPage(
                                 year: shop.year,
                                 no: shop.no,
                                 shopId: shop.id.toInt(),
                                 shopName: shop.shopName,
                                 address: shop.address,
+                                webviewUrl: webviewUrl,
                                 preloadedController:
                                     _preloadControllers[shopId]);
                           }),
