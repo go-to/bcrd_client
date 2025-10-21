@@ -44,12 +44,16 @@ class _ShopPageDetail extends ConsumerState<ShopDetailPage> {
 
     final String webViewUrl = widget.webviewUrl;
 
-    // プレロードされたControllerがある場合はそれを使用、なければ新規作成
-    if (widget.preloadedController != null) {
-      _controller = widget.preloadedController!;
-      // プレロードされたControllerにページ完了コールバックを追加
-      _controller.setNavigationDelegate(NavigationDelegate(
+    _controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setNavigationDelegate(NavigationDelegate(
         onNavigationRequest: (request) {
+          Uri uri = Uri.parse(request.url);
+          if (uri.scheme == 'intent') {
+            String url = request.url.replaceFirst('intent://', 'https://');
+            _controller.loadRequest(Uri.parse(url));
+            return NavigationDecision.prevent;
+          }
           if (request.url.contains('ads')) {
             return NavigationDecision.prevent;
           }
@@ -60,29 +64,9 @@ class _ShopPageDetail extends ConsumerState<ShopDetailPage> {
             isLoading = false;
           });
         },
-      ));
-      // プレロードが完了している可能性があるため、ローディング状態をチェック
-      setState(() {
-        isLoading = false;
-      });
-    } else {
-      _controller = WebViewController()
-        ..setJavaScriptMode(JavaScriptMode.unrestricted)
-        ..setNavigationDelegate(NavigationDelegate(
-          onNavigationRequest: (request) {
-            if (request.url.contains('ads')) {
-              return NavigationDecision.prevent;
-            }
-            return NavigationDecision.navigate;
-          },
-          onPageFinished: (_) {
-            setState(() {
-              isLoading = false;
-            });
-          },
-        ))
-        ..loadRequest(Uri.parse(webViewUrl));
-    }
+      ))
+      ..loadRequest(
+          Uri.parse(webViewUrl.replaceFirst('intent://', 'https://')));
   }
 
   @override

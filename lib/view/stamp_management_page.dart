@@ -44,7 +44,15 @@ class _StampManagementPageState extends ConsumerState<StampManagementPage> {
 
   void _preloadWebViewForShop(Shop shop) {
     final shopId = shop.id.toString();
-    final String webViewUrl = '${Config.eventBaseUrl}/${shop.year}/${shop.no}';
+    var webviewUrl = '';
+    if (shop.googleUrl != '') {
+      webviewUrl = shop.googleUrl;
+    }
+
+    // URLが空の場合はスキップ
+    if (webviewUrl.isEmpty) {
+      return;
+    }
 
     // 既存のControllerがある場合は再利用、なければ新規作成
     if (!_preloadControllers.containsKey(shopId)) {
@@ -58,7 +66,7 @@ class _StampManagementPageState extends ConsumerState<StampManagementPage> {
             return NavigationDecision.navigate;
           },
         ))
-        ..loadRequest(Uri.parse(webViewUrl));
+        ..loadRequest(Uri.parse(webviewUrl));
     }
   }
 
@@ -180,12 +188,6 @@ class _StampManagementPageState extends ConsumerState<StampManagementPage> {
                             if (shop.googleUrl != '') {
                               webviewUrl = shop.googleUrl;
                             }
-                            if (shop.tabelogUrl != '') {
-                              webviewUrl = shop.tabelogUrl;
-                            }
-                            // if (shop.instagramUrl != '') {
-                            //   webviewUrl = shop.instagramUrl;
-                            // }
 
                             return ShopDetailPage(
                                 year: shop.year,

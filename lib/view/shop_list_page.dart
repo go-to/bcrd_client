@@ -446,12 +446,6 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
         if (shop.googleUrl != '') {
           webviewUrl = shop.googleUrl;
         }
-        if (shop.tabelogUrl != '') {
-          webviewUrl = shop.tabelogUrl;
-        }
-        // if (shop.instagramUrl != '') {
-        //   webviewUrl = shop.instagramUrl;
-        // }
 
         // 既存のWebViewControllerを破棄
         _preloadController = null;
@@ -985,12 +979,6 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                                 if (shop.googleUrl != '') {
                                   webviewUrl = shop.googleUrl;
                                 }
-                                if (shop.tabelogUrl != '') {
-                                  webviewUrl = shop.tabelogUrl;
-                                }
-                                // if (shop.instagramUrl != '') {
-                                //   webviewUrl = shop.instagramUrl;
-                                // }
 
                                 return ShopDetailPage(
                                     year: shop.year,
@@ -1269,13 +1257,6 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                                                 if (shop.googleUrl != '') {
                                                   webviewUrl = shop.googleUrl;
                                                 }
-                                                if (shop.tabelogUrl != '') {
-                                                  webviewUrl = shop.tabelogUrl;
-                                                }
-                                                // if (shop.instagramUrl != '') {
-                                                //   webviewUrl =
-                                                //       shop.instagramUrl;
-                                                // }
 
                                                 return ShopDetailPage(
                                                     year: shop.year,
