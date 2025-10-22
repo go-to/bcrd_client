@@ -140,16 +140,12 @@ class Config {
       Color.fromRGBO(220, 150, 150, 0.9); // #dc9696;
   static final Color colorFromRGBODisabled =
       Color.fromRGBO(204, 204, 204, 0.9); // #cccccc
-  static final Color colorFromRGBOBeerDark =
-      Color.fromRGBO(161, 152, 34, 0.9); // #a19822
-  static final Color colorFromRGBOBeer =
-      Color.fromRGBO(255, 215, 64, 0.9); // #ffd740
   static final Color colorFromRGBOWhite =
       Color.fromRGBO(255, 255, 255, 0.9); // #ffffff
   static final Color colorFromRGBOBcrdBase =
-      Color.fromRGBO(145, 187, 152, 0.9); // #91BB98
+      Color.fromRGBO(145, 187, 152, 0.9); // #91bb98
   static final Color colorFromRGBOBcrdDeep =
-      Color.fromRGBO(45, 82, 40, 0.9); // #91BB98
+      Color.fromRGBO(45, 82, 40, 0.9); // #91bb98
 
   // 文字サイズ
   static final double fontSizeVeryLarge = 36;

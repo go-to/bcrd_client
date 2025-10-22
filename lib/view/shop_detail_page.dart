@@ -172,7 +172,7 @@ class _ShopPageDetail extends ConsumerState<ShopDetailPage> {
                         },
                         style: ElevatedButton.styleFrom(
                           foregroundColor: Colors.black,
-                          backgroundColor: Config.colorFromRGBOBeer,
+                          backgroundColor: Config.colorFromRGBOBcrdBase,
                           padding: EdgeInsets.symmetric(
                               vertical: 12, horizontal: 18),
                         ),
@@ -266,7 +266,7 @@ class _ShopPageDetail extends ConsumerState<ShopDetailPage> {
           color: Colors.transparent,
           child: Container(
             padding: EdgeInsets.all(2.0),
-            color: Config.colorFromRGBOBeerDark,
+            color: Config.colorFromRGBOBcrdBase,
             child: SafeArea(
               child: Text(
                 message,

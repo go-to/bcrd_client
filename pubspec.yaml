@@ -137,10 +137,10 @@ flutter_icons:
   ios: true
   remove_alpha_ios: true
   image_path: "assets/images/highball.png"
-  adaptive_icon_background: "#fff422"
+  adaptive_icon_background: "#91bb98"
   adaptive_icon_foreground: "assets/images/highball.png"
 
 flutter_native_splash:
   image: "assets/images/highball.png"
-  color: "#e4d012"
-  icon_background_color: "#e4d012"
+  color: "#91bb98"
+  icon_background_color: "#91bb98"

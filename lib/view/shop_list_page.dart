@@ -1478,8 +1478,8 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                                                                         4),
                                                                 decoration:
                                                                     BoxDecoration(
-                                                                  color: Colors
-                                                                      .amberAccent,
+                                                                  color: Config
+                                                                      .colorFromRGBOBcrdBase,
                                                                   borderRadius:
                                                                       BorderRadius
                                                                           .circular(
