@@ -446,6 +446,9 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
         if (shop.googleUrl != '') {
           webviewUrl = shop.googleUrl;
         }
+        if (shop.tabelogUrl != '') {
+          webviewUrl = shop.tabelogUrl;
+        }
 
         // 既存のWebViewControllerを破棄
         _preloadController = null;
@@ -979,6 +982,9 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                                 if (shop.googleUrl != '') {
                                   webviewUrl = shop.googleUrl;
                                 }
+                                if (shop.tabelogUrl != '') {
+                                  webviewUrl = shop.tabelogUrl;
+                                }
 
                                 return ShopDetailPage(
                                     year: shop.year,
@@ -1256,6 +1262,9 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                                                 var webviewUrl = '';
                                                 if (shop.googleUrl != '') {
                                                   webviewUrl = shop.googleUrl;
+                                                }
+                                                if (shop.tabelogUrl != '') {
+                                                  webviewUrl = shop.tabelogUrl;
                                                 }
 
                                                 return ShopDetailPage(
