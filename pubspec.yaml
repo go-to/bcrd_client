@@ -1,5 +1,5 @@
-name: egp_client
-description: "ebisu-gp app"
+name: bcrd_client
+description: "bcrd app"
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -93,6 +93,9 @@ flutter:
     - assets/images/shop_selected.png
     - assets/images/done.png
     - assets/images/done_selected.png
+    - assets/images/bacardi.png
+    - assets/images/highball.png
+    - assets/images/instagram.png
 
   fonts:
     - family: Custom
@@ -134,11 +137,11 @@ flutter_icons:
   android: true
   ios: true
   remove_alpha_ios: true
-  image_path: "assets/images/icon.png"
-  adaptive_icon_background: "#fff422"
-  adaptive_icon_foreground: "assets/images/icon.png"
+  image_path: "assets/images/highball.png"
+  adaptive_icon_background: "#91bb98"
+  adaptive_icon_foreground: "assets/images/highball.png"
 
 flutter_native_splash:
-  image: "assets/images/icon.png"
-  color: "#e4d012"
-  icon_background_color: "#e4d012"
+  image: "assets/images/highball.png"
+  color: "#91bb98"
+  icon_background_color: "#91bb98"

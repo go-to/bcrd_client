@@ -1,11 +1,11 @@
 import 'package:fixnum/fixnum.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:grpc/grpc.dart';
-import 'package:egp_client/grpc_gen/egp.pbgrpc.dart';
+import 'package:bcrd_client/grpc_gen/bcrd.pbgrpc.dart';
 
 class GrpcService {
   static ClientChannel? _channel;
-  static EgpServiceClient? _client;
+  static BcrdServiceClient? _client;
 
   static CallOptions getCallOptions() {
     return CallOptions(metadata: {
@@ -23,8 +23,8 @@ class GrpcService {
     return _channel!;
   }
 
-  static EgpServiceClient getClient() {
-    _client ??= EgpServiceClient(getChannel());
+  static BcrdServiceClient getClient() {
+    _client ??= BcrdServiceClient(getChannel());
     return _client!;
   }
 

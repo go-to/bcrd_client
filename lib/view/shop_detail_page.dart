@@ -1,5 +1,5 @@
-import 'package:egp_client/provider/stamp_provider.dart';
-import 'package:egp_client/service/auth_service.dart';
+import 'package:bcrd_client/provider/stamp_provider.dart';
+import 'package:bcrd_client/service/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,6 +16,7 @@ class ShopDetailPage extends ConsumerStatefulWidget {
   final int shopId;
   final String shopName;
   final String address;
+  final String webviewUrl;
   final WebViewController? preloadedController;
 
   const ShopDetailPage({
@@ -25,6 +26,7 @@ class ShopDetailPage extends ConsumerStatefulWidget {
     required this.shopId,
     required this.shopName,
     required this.address,
+    required this.webviewUrl,
     this.preloadedController,
   });
 
@@ -40,15 +42,18 @@ class _ShopPageDetail extends ConsumerState<ShopDetailPage> {
   void initState() {
     super.initState();
 
-    final String webViewUrl =
-        '${Config.eventBaseUrl}/${widget.year}/${widget.no}';
+    final String webViewUrl = widget.webviewUrl;
 
-    // プレロードされたControllerがある場合はそれを使用、なければ新規作成
-    if (widget.preloadedController != null) {
-      _controller = widget.preloadedController!;
-      // プレロードされたControllerにページ完了コールバックを追加
-      _controller.setNavigationDelegate(NavigationDelegate(
+    _controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setNavigationDelegate(NavigationDelegate(
         onNavigationRequest: (request) {
+          Uri uri = Uri.parse(request.url);
+          if (uri.scheme == 'intent') {
+            String url = request.url.replaceFirst('intent://', 'https://');
+            _controller.loadRequest(Uri.parse(url));
+            return NavigationDecision.prevent;
+          }
           if (request.url.contains('ads')) {
             return NavigationDecision.prevent;
           }
@@ -59,29 +64,9 @@ class _ShopPageDetail extends ConsumerState<ShopDetailPage> {
             isLoading = false;
           });
         },
-      ));
-      // プレロードが完了している可能性があるため、ローディング状態をチェック
-      setState(() {
-        isLoading = false;
-      });
-    } else {
-      _controller = WebViewController()
-        ..setJavaScriptMode(JavaScriptMode.unrestricted)
-        ..setNavigationDelegate(NavigationDelegate(
-          onNavigationRequest: (request) {
-            if (request.url.contains('ads')) {
-              return NavigationDecision.prevent;
-            }
-            return NavigationDecision.navigate;
-          },
-          onPageFinished: (_) {
-            setState(() {
-              isLoading = false;
-            });
-          },
-        ))
-        ..loadRequest(Uri.parse(webViewUrl));
-    }
+      ))
+      ..loadRequest(
+          Uri.parse(webViewUrl.replaceFirst('intent://', 'https://')));
   }
 
   @override
@@ -187,7 +172,7 @@ class _ShopPageDetail extends ConsumerState<ShopDetailPage> {
                         },
                         style: ElevatedButton.styleFrom(
                           foregroundColor: Colors.black,
-                          backgroundColor: Config.colorFromRGBOBeer,
+                          backgroundColor: Config.colorFromRGBOBcrdBase,
                           padding: EdgeInsets.symmetric(
                               vertical: 12, horizontal: 18),
                         ),
@@ -281,7 +266,7 @@ class _ShopPageDetail extends ConsumerState<ShopDetailPage> {
           color: Colors.transparent,
           child: Container(
             padding: EdgeInsets.all(2.0),
-            color: Config.colorFromRGBOBeerDark,
+            color: Config.colorFromRGBOBcrdBase,
             child: SafeArea(
               child: Text(
                 message,

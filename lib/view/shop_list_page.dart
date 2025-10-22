@@ -3,20 +3,21 @@ import 'dart:collection';
 import 'dart:core';
 import 'dart:ui' as ui;
 
-import 'package:egp_client/grpc_gen/egp.pb.dart';
-import 'package:egp_client/provider/search_condition_provider.dart';
-import 'package:egp_client/provider/search_keyword_provider.dart';
-import 'package:egp_client/provider/sort_order_provider.dart';
+import 'package:bcrd_client/grpc_gen/bcrd.pb.dart';
+import 'package:bcrd_client/provider/search_condition_provider.dart';
+import 'package:bcrd_client/provider/search_keyword_provider.dart';
+import 'package:bcrd_client/provider/sort_order_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 import '../common/util.dart';
 import '../const/config.dart';
-import '../grpc_gen/egp.pb.dart' as pb;
+import '../grpc_gen/bcrd.pb.dart' as pb;
 import '../provider/marker_provider.dart';
 import '../provider/shop_provider.dart';
 import '../service/shop_service.dart';
@@ -27,27 +28,21 @@ import '../icon/custom_icons.dart' as custom_icon;
 class CustomMarker {
   final String id;
   final int no;
-  final CategoryType categoryId;
   final LatLng position;
   final double zIndex;
   final bool inCurrentSales;
   final bool isStamped;
   final bool isIrregularHoliday;
-  final bool needsReservation;
-  final String imageUrl;
   BitmapDescriptor? icon;
 
   CustomMarker({
     required this.id,
     required this.no,
-    required this.categoryId,
     required this.position,
     required this.zIndex,
     required this.inCurrentSales,
     required this.isStamped,
     required this.isIrregularHoliday,
-    required this.needsReservation,
-    required this.imageUrl,
     this.icon,
   });
 }
@@ -244,14 +239,11 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
         CustomMarker(
           id: shop.id.toString(),
           no: shop.no,
-          categoryId: shop.categoryId,
           position: LatLng(shop.latitude, shop.longitude),
           zIndex: 0.0,
           inCurrentSales: shop.inCurrentSales,
           isStamped: shop.isStamped,
           isIrregularHoliday: shop.isIrregularHoliday,
-          needsReservation: shop.normalizedNeedsReservation,
-          imageUrl: shop.menuImageUrl,
           icon: shopDefaultIcon,
         ),
       );
@@ -283,7 +275,7 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
   }
 
   String _generateMarkerCacheKey(CustomMarker marker, bool isSelected) {
-    return '${marker.id}_${marker.no}_${marker.categoryId}_${marker.inCurrentSales}_${marker.isStamped}_${marker.isIrregularHoliday}_${marker.needsReservation}_$isSelected';
+    return '${marker.id}_${marker.no}_${marker.inCurrentSales}_${marker.isStamped}_${marker.isIrregularHoliday}_$isSelected';
   }
 
   Future<BitmapDescriptor> _generateCustomIcon(CustomMarker marker,
@@ -309,22 +301,19 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
       // 営業時間内
       if (marker.inCurrentSales) {
         textColor = Colors.black;
-        // 要予約
-        if (marker.needsReservation) {
-          textLabel = Config.needsReservation;
-        } else if (marker.isIrregularHoliday) {
-          // 不定休
+        // 不定休
+        if (marker.isIrregularHoliday) {
           textLabel = Config.irregularHoliday;
         }
       }
+      final bgPaint = Paint()
+        ..color = Config.colorFromRGBOBcrdDeep.withAlpha(200);
+      canvas.drawCircle(Offset(size / 2, size / 2), size / 2, bgPaint);
       // 営業時間内
     } else if (marker.inCurrentSales) {
       textColor = Colors.black;
-      // 要予約
-      if (marker.needsReservation) {
-        textLabel = Config.needsReservation;
-        // 不定休
-      } else if (marker.isIrregularHoliday) {
+      // 不定休
+      if (marker.isIrregularHoliday) {
         textLabel = Config.irregularHoliday;
       }
     }
@@ -395,9 +384,7 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
       );
 
       // 通常営業以外の場合は情報を描画
-      if (!marker.inCurrentSales ||
-          marker.isIrregularHoliday ||
-          marker.needsReservation) {
+      if (!marker.inCurrentSales || marker.isIrregularHoliday) {
         final textPainter = TextPainter(
           text: TextSpan(
             text: textLabel,
@@ -420,27 +407,7 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
     }
 
     // 枠線にカテゴリの色を表示
-    Color borderColor = Colors.black;
-    switch (marker.categoryId) {
-      case CategoryType.CATEGORY_TYPE_BEER_COCKTAIL:
-        borderColor = Color(0xFF494967);
-        break;
-      case CategoryType.CATEGORY_TYPE_EBISU_1:
-        borderColor = Color(0xFF7456D9);
-        break;
-      case CategoryType.CATEGORY_TYPE_EBISU_2:
-        borderColor = Color(0xFF8BC0F0);
-        break;
-      case CategoryType.CATEGORY_TYPE_EBISU_SOUTH:
-        borderColor = Color(0xFFD59B60);
-        break;
-      case CategoryType.CATEGORY_TYPE_EBISU_WEST:
-        borderColor = Color(0xFFF0E157);
-        break;
-      case CategoryType.CATEGORY_TYPE_NONE:
-        borderColor = Color(0xFF454545);
-        break;
-    }
+    Color borderColor = Config.colorFromRGBOBcrdBase;
     // 枠線を描画
     final borderPaint = Paint()
       ..color = borderColor
@@ -476,8 +443,13 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
           orElse: () => shops.shops.first,
         );
 
-        final String webViewUrl =
-            '${Config.eventBaseUrl}/${shop.year}/${shop.no}';
+        var webviewUrl = '';
+        if (shop.googleUrl != '') {
+          webviewUrl = shop.googleUrl;
+        }
+        // if (shop.tabelogUrl != '') {
+        //   webviewUrl = shop.tabelogUrl;
+        // }
 
         // 既存のWebViewControllerを破棄
         _preloadController = null;
@@ -493,7 +465,7 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
               return NavigationDecision.navigate;
             },
           ))
-          ..loadRequest(Uri.parse(webViewUrl));
+          ..loadRequest(Uri.parse(webviewUrl));
       }
     });
   }
@@ -998,22 +970,30 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                     itemBuilder: (context, index) {
                       final shop = shops!.shops[index];
                       final attributes = {
-                        Config.shopCardAttributeMenu: shop.menuName,
                         Config.shopCardAttributeAddress: shop.address,
-                        Config.shopCardAttributeBusinessHours:
-                            shop.businessHours,
+                        // Config.shopCardAttributeBusinessHours:
+                        //     shop.businessHours,
                       };
                       return GestureDetector(
                           onTap: () async {
                             await Navigator.of(context).push<bool>(
                               MaterialPageRoute(builder: (context) {
                                 final shop = shops.shops.elementAt(index);
+                                var webviewUrl = '';
+                                if (shop.googleUrl != '') {
+                                  webviewUrl = shop.googleUrl;
+                                }
+                                // if (shop.tabelogUrl != '') {
+                                //   webviewUrl = shop.tabelogUrl;
+                                // }
+
                                 return ShopDetailPage(
                                     year: shop.year,
                                     no: shop.no,
                                     shopId: shop.id.toInt(),
                                     shopName: shop.shopName,
                                     address: shop.address,
+                                    webviewUrl: webviewUrl,
                                     preloadedController: _preloadController);
                               }),
                             ).then((onValue) async {
@@ -1053,7 +1033,7 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                                           borderRadius:
                                               BorderRadius.circular(8),
                                           child: Image.network(
-                                            shop.menuImageUrl,
+                                            shop.imageUrl,
                                             fit: BoxFit.contain,
                                             loadingBuilder: (context, child,
                                                 loadingProgress) {
@@ -1089,19 +1069,61 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                                         child: Column(
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
-                                          children:
-                                              attributes.entries.map((entry) {
-                                            return Padding(
-                                              padding:
-                                                  EdgeInsets.only(bottom: 4),
-                                              child: Text(
-                                                '${entry.key}: ${entry.value}',
-                                                style: TextStyle(
-                                                    fontSize: Config
-                                                        .fontSizeVerySmall),
-                                              ),
-                                            );
-                                          }).toList(),
+                                          children: attributes.entries
+                                                  .map((entry) {
+                                                return Padding(
+                                                  padding: EdgeInsets.only(
+                                                      bottom: 4),
+                                                  child: Text(
+                                                    '${entry.key}: ${entry.value}',
+                                                    style: TextStyle(
+                                                        fontSize: Config
+                                                            .fontSizeVerySmall),
+                                                  ),
+                                                );
+                                              }).toList() +
+                                              [
+                                                (shop.instagramUrl != '')
+                                                    ? Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .only(top: 10),
+                                                        child: GestureDetector(
+                                                          onTap: () async {
+                                                            if (shop.instagramUrl ==
+                                                                '') {
+                                                              return;
+                                                            }
+                                                            Uri url = Uri.parse(
+                                                                shop.instagramUrl);
+                                                            if (!await launchUrl(
+                                                                url,
+                                                                mode: LaunchMode
+                                                                    .externalApplication)) {
+                                                              throw Exception(
+                                                                  'URLを開けませんでした');
+                                                            }
+                                                          },
+                                                          child: Image.asset(
+                                                            Config
+                                                                .instagramImagePath,
+                                                            width: 30,
+                                                          ),
+                                                        ))
+                                                    : Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .only(top: 10),
+                                                        child: Opacity(
+                                                          opacity: 0.1,
+                                                          child: Image.asset(
+                                                            Config
+                                                                .instagramImagePath,
+                                                            width: 30,
+                                                          ),
+                                                        ),
+                                                      ),
+                                              ],
                                         ),
                                       ),
                                     ),
@@ -1265,12 +1287,12 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                                         final shop =
                                             shops.shops.elementAt(index);
                                         final attributes = {
-                                          Config.shopCardAttributeMenu:
-                                              shop.menuName,
+                                          // Config.shopCardAttributeMenu:
+                                          //     shop.menuName,
                                           Config.shopCardAttributeAddress:
                                               shop.address,
-                                          Config.shopCardAttributeBusinessHours:
-                                              shop.businessHours,
+                                          // Config.shopCardAttributeBusinessHours:
+                                          //     shop.businessHours,
                                         };
                                         return GestureDetector(
                                           onTap: () async {
@@ -1280,12 +1302,21 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                                                   builder: (context) {
                                                 final shop = shops.shops
                                                     .elementAt(index);
+                                                var webviewUrl = '';
+                                                if (shop.googleUrl != '') {
+                                                  webviewUrl = shop.googleUrl;
+                                                }
+                                                // if (shop.tabelogUrl != '') {
+                                                //   webviewUrl = shop.tabelogUrl;
+                                                // }
+
                                                 return ShopDetailPage(
                                                     year: shop.year,
                                                     no: shop.no,
                                                     shopId: shop.id.toInt(),
                                                     shopName: shop.shopName,
                                                     address: shop.address,
+                                                    webviewUrl: webviewUrl,
                                                     preloadedController: null);
                                               }),
                                             ).then((onValue) async {
@@ -1316,7 +1347,7 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                                                               BorderRadius
                                                                   .circular(8),
                                                           child: Image.network(
-                                                            shop.menuImageUrl,
+                                                            shop.imageUrl,
                                                             fit: BoxFit.cover,
                                                             height: 140,
                                                             width: 160,
@@ -1365,7 +1396,7 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                                                               scale: 1.2,
                                                               child: Image.asset(
                                                                   Config
-                                                                      .isStampedSelectedImagePath,
+                                                                      .isStampedSelectedTextImagePath,
                                                                   width: 150,
                                                                   height: 150),
                                                             ),
@@ -1499,8 +1530,8 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                                                                         4),
                                                                 decoration:
                                                                     BoxDecoration(
-                                                                  color: Colors
-                                                                      .amberAccent,
+                                                                  color: Config
+                                                                      .colorFromRGBOBcrdBase,
                                                                   borderRadius:
                                                                       BorderRadius
                                                                           .circular(
@@ -1563,7 +1594,61 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                                                                       .fontSizeVerySmall),
                                                             ),
                                                           );
-                                                        }).toList(),
+                                                        }).toList() +
+                                                        [
+                                                          (shop.instagramUrl !=
+                                                                  '')
+                                                              ? Padding(
+                                                                  padding:
+                                                                      const EdgeInsets
+                                                                          .only(
+                                                                          top:
+                                                                              10),
+                                                                  child:
+                                                                      GestureDetector(
+                                                                    onTap:
+                                                                        () async {
+                                                                      if (shop.instagramUrl ==
+                                                                          '') {
+                                                                        return;
+                                                                      }
+                                                                      Uri url =
+                                                                          Uri.parse(
+                                                                              shop.instagramUrl);
+                                                                      if (!await launchUrl(
+                                                                          url,
+                                                                          mode:
+                                                                              LaunchMode.externalApplication)) {
+                                                                        throw Exception(
+                                                                            'URLを開けませんでした');
+                                                                      }
+                                                                    },
+                                                                    child: Image
+                                                                        .asset(
+                                                                      Config
+                                                                          .instagramImagePath,
+                                                                      width: 30,
+                                                                    ),
+                                                                  ))
+                                                              : Padding(
+                                                                  padding:
+                                                                      const EdgeInsets
+                                                                          .only(
+                                                                          top:
+                                                                              10),
+                                                                  child:
+                                                                      Opacity(
+                                                                    opacity:
+                                                                        0.1,
+                                                                    child: Image
+                                                                        .asset(
+                                                                      Config
+                                                                          .instagramImagePath,
+                                                                      width: 30,
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                        ],
                                                   ),
                                                 ),
                                               ],
@@ -1647,7 +1732,7 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
       },
       style: ElevatedButton.styleFrom(
         backgroundColor: selectedKeys.contains(searchKey)
-            ? Colors.amberAccent
+            ? Config.colorFromRGBOBcrdBase
             : colorScheme.surface,
       ),
       child: Text(label,

@@ -3,11 +3,11 @@ SHELL=/bin/bash
 ANDROID_ENV_FILE_PATH=android/secret.properties
 IOS_ENV_FILE_PATH=ios/RUNNER/Environment.swift
 ENV_FILE_DEFAULT_EXTENSION=.example
-PROTOBUF_SRC_PATH=../egp_protobuf/src
+PROTOBUF_SRC_PATH=../bcrd_protobuf/src
 GRPC_GEN_PATH=lib/grpc_gen
 
 # firebase project
-project=
+project=bcrd-dev
 
 setup:
 	flutter clean
@@ -21,6 +21,9 @@ setup-firebase:
 protoc:
 	if [ ! -e "${GRPC_GEN_PATH}" ]; then mkdir -p "${GRPC_GEN_PATH}"; fi
 	protoc --dart_out=grpc:${GRPC_GEN_PATH} -I ${PROTOBUF_SRC_PATH} ${PROTOBUF_SRC_PATH}/*.proto google/protobuf/timestamp.proto
+icon:
+	flutter pub run flutter_launcher_icons:main
+	flutter pub run flutter_native_splash:create
 main-branch:
 	git switch main
 	git branch | grep -v "main" | xargs git branch -d
@@ -32,7 +35,7 @@ develop-branch:
 build-runner:
 	flutter pub run build_runner build --delete-conflicting-outputs
 build-app:
-	flutter build apk --release && mv build/app/outputs/flutter-apk/app-release.apk ./build/egp.apk
+	flutter build apk --release && mv build/app/outputs/flutter-apk/app-release.apk ./build/bcrd.apk
 release-note:
 	cat release_note.txt > android/fastlane/release_note.txt
 	cat release_note.txt > ios/fastlane/release_note.txt

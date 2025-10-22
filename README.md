@@ -1,1 +1,1 @@
-# egp-client
+# bcrd-client

@@ -1,6 +1,6 @@
-import 'package:egp_client/grpc_gen/egp.pb.dart';
-import 'package:egp_client/service/grpc_service.dart';
-import 'package:egp_client/view/shop_detail_page.dart';
+import 'package:bcrd_client/grpc_gen/bcrd.pb.dart';
+import 'package:bcrd_client/service/grpc_service.dart';
+import 'package:bcrd_client/view/shop_detail_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:webview_flutter/webview_flutter.dart';
@@ -44,7 +44,15 @@ class _StampManagementPageState extends ConsumerState<StampManagementPage> {
 
   void _preloadWebViewForShop(Shop shop) {
     final shopId = shop.id.toString();
-    final String webViewUrl = '${Config.eventBaseUrl}/${shop.year}/${shop.no}';
+    var webviewUrl = '';
+    if (shop.googleUrl != '') {
+      webviewUrl = shop.googleUrl;
+    }
+
+    // URLが空の場合はスキップ
+    if (webviewUrl.isEmpty) {
+      return;
+    }
 
     // 既存のControllerがある場合は再利用、なければ新規作成
     if (!_preloadControllers.containsKey(shopId)) {
@@ -58,7 +66,7 @@ class _StampManagementPageState extends ConsumerState<StampManagementPage> {
             return NavigationDecision.navigate;
           },
         ))
-        ..loadRequest(Uri.parse(webViewUrl));
+        ..loadRequest(Uri.parse(webviewUrl));
     }
   }
 
@@ -176,12 +184,18 @@ class _StampManagementPageState extends ConsumerState<StampManagementPage> {
                       onTap: () async {
                         await Navigator.of(context).push<bool>(
                           MaterialPageRoute(builder: (context) {
+                            var webviewUrl = '';
+                            if (shop.googleUrl != '') {
+                              webviewUrl = shop.googleUrl;
+                            }
+
                             return ShopDetailPage(
                                 year: shop.year,
                                 no: shop.no,
                                 shopId: shop.id.toInt(),
                                 shopName: shop.shopName,
                                 address: shop.address,
+                                webviewUrl: webviewUrl,
                                 preloadedController:
                                     _preloadControllers[shopId]);
                           }),
