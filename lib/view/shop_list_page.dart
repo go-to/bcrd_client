@@ -1353,7 +1353,7 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                                                               scale: 1.2,
                                                               child: Image.asset(
                                                                   Config
-                                                                      .isStampedSelectedImagePath,
+                                                                      .isStampedSelectedTextImagePath,
                                                                   width: 150,
                                                                   height: 150),
                                                             ),
