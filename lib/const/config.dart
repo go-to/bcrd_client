@@ -23,6 +23,7 @@ class Config {
   static const String isStampedImagePath = 'assets/images/bacardi.png';
   static const String isStampedSelectedImagePath = 'assets/images/bacardi.png';
   static const String isStampedSelectedTextImagePath = 'assets/images/done_selected.png';
+  static const String instagramImagePath = 'assets/images/instagram.png';
   static const double shopImageWidth = 50;
   static const double shopImageHeight = 50;
   static const double shopSelectedImageWidth = 80;

@@ -12,6 +12,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 import '../common/util.dart';
@@ -446,9 +447,9 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
         if (shop.googleUrl != '') {
           webviewUrl = shop.googleUrl;
         }
-        if (shop.tabelogUrl != '') {
-          webviewUrl = shop.tabelogUrl;
-        }
+        // if (shop.tabelogUrl != '') {
+        //   webviewUrl = shop.tabelogUrl;
+        // }
 
         // 既存のWebViewControllerを破棄
         _preloadController = null;
@@ -982,9 +983,9 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                                 if (shop.googleUrl != '') {
                                   webviewUrl = shop.googleUrl;
                                 }
-                                if (shop.tabelogUrl != '') {
-                                  webviewUrl = shop.tabelogUrl;
-                                }
+                                // if (shop.tabelogUrl != '') {
+                                //   webviewUrl = shop.tabelogUrl;
+                                // }
 
                                 return ShopDetailPage(
                                     year: shop.year,
@@ -1068,19 +1069,61 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                                         child: Column(
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
-                                          children:
-                                              attributes.entries.map((entry) {
-                                            return Padding(
-                                              padding:
-                                                  EdgeInsets.only(bottom: 4),
-                                              child: Text(
-                                                '${entry.key}: ${entry.value}',
-                                                style: TextStyle(
-                                                    fontSize: Config
-                                                        .fontSizeVerySmall),
-                                              ),
-                                            );
-                                          }).toList(),
+                                          children: attributes.entries
+                                                  .map((entry) {
+                                                return Padding(
+                                                  padding: EdgeInsets.only(
+                                                      bottom: 4),
+                                                  child: Text(
+                                                    '${entry.key}: ${entry.value}',
+                                                    style: TextStyle(
+                                                        fontSize: Config
+                                                            .fontSizeVerySmall),
+                                                  ),
+                                                );
+                                              }).toList() +
+                                              [
+                                                (shop.instagramUrl != '')
+                                                    ? Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .only(top: 10),
+                                                        child: GestureDetector(
+                                                          onTap: () async {
+                                                            if (shop.instagramUrl ==
+                                                                '') {
+                                                              return;
+                                                            }
+                                                            Uri url = Uri.parse(
+                                                                shop.instagramUrl);
+                                                            if (!await launchUrl(
+                                                                url,
+                                                                mode: LaunchMode
+                                                                    .externalApplication)) {
+                                                              throw Exception(
+                                                                  'URLを開けませんでした');
+                                                            }
+                                                          },
+                                                          child: Image.asset(
+                                                            Config
+                                                                .instagramImagePath,
+                                                            width: 30,
+                                                          ),
+                                                        ))
+                                                    : Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .only(top: 10),
+                                                        child: Opacity(
+                                                          opacity: 0.1,
+                                                          child: Image.asset(
+                                                            Config
+                                                                .instagramImagePath,
+                                                            width: 30,
+                                                          ),
+                                                        ),
+                                                      ),
+                                              ],
                                         ),
                                       ),
                                     ),
@@ -1263,9 +1306,9 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                                                 if (shop.googleUrl != '') {
                                                   webviewUrl = shop.googleUrl;
                                                 }
-                                                if (shop.tabelogUrl != '') {
-                                                  webviewUrl = shop.tabelogUrl;
-                                                }
+                                                // if (shop.tabelogUrl != '') {
+                                                //   webviewUrl = shop.tabelogUrl;
+                                                // }
 
                                                 return ShopDetailPage(
                                                     year: shop.year,
@@ -1551,7 +1594,61 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                                                                       .fontSizeVerySmall),
                                                             ),
                                                           );
-                                                        }).toList(),
+                                                        }).toList() +
+                                                        [
+                                                          (shop.instagramUrl !=
+                                                                  '')
+                                                              ? Padding(
+                                                                  padding:
+                                                                      const EdgeInsets
+                                                                          .only(
+                                                                          top:
+                                                                              10),
+                                                                  child:
+                                                                      GestureDetector(
+                                                                    onTap:
+                                                                        () async {
+                                                                      if (shop.instagramUrl ==
+                                                                          '') {
+                                                                        return;
+                                                                      }
+                                                                      Uri url =
+                                                                          Uri.parse(
+                                                                              shop.instagramUrl);
+                                                                      if (!await launchUrl(
+                                                                          url,
+                                                                          mode:
+                                                                              LaunchMode.externalApplication)) {
+                                                                        throw Exception(
+                                                                            'URLを開けませんでした');
+                                                                      }
+                                                                    },
+                                                                    child: Image
+                                                                        .asset(
+                                                                      Config
+                                                                          .instagramImagePath,
+                                                                      width: 30,
+                                                                    ),
+                                                                  ))
+                                                              : Padding(
+                                                                  padding:
+                                                                      const EdgeInsets
+                                                                          .only(
+                                                                          top:
+                                                                              10),
+                                                                  child:
+                                                                      Opacity(
+                                                                    opacity:
+                                                                        0.1,
+                                                                    child: Image
+                                                                        .asset(
+                                                                      Config
+                                                                          .instagramImagePath,
+                                                                      width: 30,
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                        ],
                                                   ),
                                                 ),
                                               ],

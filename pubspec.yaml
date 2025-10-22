@@ -95,6 +95,7 @@ flutter:
     - assets/images/done_selected.png
     - assets/images/bacardi.png
     - assets/images/highball.png
+    - assets/images/instagram.png
 
   fonts:
     - family: Custom
