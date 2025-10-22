@@ -234,6 +234,7 @@ class Shop extends $pb.GeneratedMessage {
     $core.bool? inCurrentSales,
     $core.bool? isStamped,
     $core.int? numberOfTimes,
+    $core.String? placeId,
   }) {
     final $result = create();
     if (id != null) {
@@ -314,6 +315,9 @@ class Shop extends $pb.GeneratedMessage {
     if (numberOfTimes != null) {
       $result.numberOfTimes = numberOfTimes;
     }
+    if (placeId != null) {
+      $result.placeId = placeId;
+    }
     return $result;
   }
   Shop._() : super();
@@ -347,6 +351,7 @@ class Shop extends $pb.GeneratedMessage {
     ..aOB(24, _omitFieldNames ? '' : 'inCurrentSales')
     ..aOB(25, _omitFieldNames ? '' : 'isStamped')
     ..a<$core.int>(26, _omitFieldNames ? '' : 'numberOfTimes', $pb.PbFieldType.O3)
+    ..aOS(27, _omitFieldNames ? '' : 'placeId')
     ..hasRequiredFields = false
   ;
 
@@ -604,6 +609,15 @@ class Shop extends $pb.GeneratedMessage {
   $core.bool hasNumberOfTimes() => $_has(25);
   @$pb.TagNumber(26)
   void clearNumberOfTimes() => clearField(26);
+
+  @$pb.TagNumber(27)
+  $core.String get placeId => $_getSZ(26);
+  @$pb.TagNumber(27)
+  set placeId($core.String v) { $_setString(26, v); }
+  @$pb.TagNumber(27)
+  $core.bool hasPlaceId() => $_has(26);
+  @$pb.TagNumber(27)
+  void clearPlaceId() => clearField(27);
 }
 
 class ShopLocation extends $pb.GeneratedMessage {

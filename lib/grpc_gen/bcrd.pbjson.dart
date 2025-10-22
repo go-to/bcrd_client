@@ -105,6 +105,7 @@ const Shop$json = {
     {'1': 'in_current_sales', '3': 24, '4': 1, '5': 8, '10': 'inCurrentSales'},
     {'1': 'is_stamped', '3': 25, '4': 1, '5': 8, '10': 'isStamped'},
     {'1': 'number_of_times', '3': 26, '4': 1, '5': 5, '10': 'numberOfTimes'},
+    {'1': 'place_id', '3': 27, '4': 1, '5': 9, '10': 'placeId'},
   ],
 };
 
@@ -124,7 +125,8 @@ final $typed_data.Uint8List shopDescriptor = $convert.base64Decode(
     'EoBVIJZGF5T2ZXZWVrEh0KCnN0YXJ0X3RpbWUYFSABKAlSCXN0YXJ0VGltZRIZCghlbmRfdGlt'
     'ZRgWIAEoCVIHZW5kVGltZRIdCgppc19ob2xpZGF5GBcgASgIUglpc0hvbGlkYXkSKAoQaW5fY3'
     'VycmVudF9zYWxlcxgYIAEoCFIOaW5DdXJyZW50U2FsZXMSHQoKaXNfc3RhbXBlZBgZIAEoCFIJ'
-    'aXNTdGFtcGVkEiYKD251bWJlcl9vZl90aW1lcxgaIAEoBVINbnVtYmVyT2ZUaW1lcw==');
+    'aXNTdGFtcGVkEiYKD251bWJlcl9vZl90aW1lcxgaIAEoBVINbnVtYmVyT2ZUaW1lcxIZCghwbG'
+    'FjZV9pZBgbIAEoCVIHcGxhY2VJZA==');
 
 @$core.Deprecated('Use shopLocationDescriptor instead')
 const ShopLocation$json = {
