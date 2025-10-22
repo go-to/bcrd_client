@@ -37,6 +37,7 @@ class ShopDetailPage extends ConsumerStatefulWidget {
 class _ShopPageDetail extends ConsumerState<ShopDetailPage> {
   bool isLoading = true;
   late WebViewController _controller;
+  String? _lastFinishedUrl;
 
   @override
   void initState() {
@@ -59,10 +60,15 @@ class _ShopPageDetail extends ConsumerState<ShopDetailPage> {
           }
           return NavigationDecision.navigate;
         },
-        onPageFinished: (_) {
+        onPageFinished: (url) {
           setState(() {
             isLoading = false;
           });
+          if (_lastFinishedUrl != url) {
+            _lastFinishedUrl = url;
+            _controller.runJavaScript(
+                'if (document.getElementsByClassName("ecJbe")[0] != undefined) document.getElementsByClassName("ecJbe")[0].click();');
+          }
         },
       ))
       ..loadRequest(
