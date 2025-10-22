@@ -1,5 +1,5 @@
-import 'package:egp_client/provider/stamp_provider.dart';
-import 'package:egp_client/service/auth_service.dart';
+import 'package:bcrd_client/provider/stamp_provider.dart';
+import 'package:bcrd_client/service/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,6 +16,8 @@ class ShopDetailPage extends ConsumerStatefulWidget {
   final int shopId;
   final String shopName;
   final String address;
+  final String webviewUrl;
+  final WebViewController? preloadedController;
 
   const ShopDetailPage({
     super.key,
@@ -24,6 +26,8 @@ class ShopDetailPage extends ConsumerStatefulWidget {
     required this.shopId,
     required this.shopName,
     required this.address,
+    required this.webviewUrl,
+    this.preloadedController,
   });
 
   @override
@@ -33,29 +37,42 @@ class ShopDetailPage extends ConsumerStatefulWidget {
 class _ShopPageDetail extends ConsumerState<ShopDetailPage> {
   bool isLoading = true;
   late WebViewController _controller;
+  String? _lastFinishedUrl;
 
   @override
   void initState() {
     super.initState();
 
-    final String webViewUrl =
-        '${Config.eventBaseUrl}/${widget.year}/${widget.no}';
+    final String webViewUrl = widget.webviewUrl;
+
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setNavigationDelegate(NavigationDelegate(
         onNavigationRequest: (request) {
+          Uri uri = Uri.parse(request.url);
+          if (uri.scheme == 'intent') {
+            String url = request.url.replaceFirst('intent://', 'https://');
+            _controller.loadRequest(Uri.parse(url));
+            return NavigationDecision.prevent;
+          }
           if (request.url.contains('ads')) {
             return NavigationDecision.prevent;
           }
           return NavigationDecision.navigate;
         },
-        onPageFinished: (_) {
+        onPageFinished: (url) {
           setState(() {
             isLoading = false;
           });
+          if (_lastFinishedUrl != url) {
+            _lastFinishedUrl = url;
+            _controller.runJavaScript(
+                'if (document.getElementsByClassName("ecJbe")[0] != undefined) document.getElementsByClassName("ecJbe")[0].click();');
+          }
         },
       ))
-      ..loadRequest(Uri.parse(webViewUrl));
+      ..loadRequest(
+          Uri.parse(webViewUrl.replaceFirst('intent://', 'https://')));
   }
 
   @override
@@ -63,7 +80,7 @@ class _ShopPageDetail extends ConsumerState<ShopDetailPage> {
     final user = ref.read(authServiceProvider.notifier).getCurrentUser();
     final userId = user!.uid;
     final shopId = widget.shopId;
-    final stampNumAsync = ref.watch(StampProvider(context, userId, shopId));
+    final stampNumAsync = ref.watch(stampProvider(context, userId, shopId));
     // 現在のテーマからカラースキームを取得
     final colorScheme = Theme.of(context).colorScheme;
 
@@ -85,10 +102,14 @@ class _ShopPageDetail extends ConsumerState<ShopDetailPage> {
               onPressed: () async {
                 // 現在のURLを取得してクリップボードにコピー
                 String? currentUrl = await _controller.currentUrl();
+                if (!mounted) return;
                 if (currentUrl != null) {
                   Clipboard.setData(ClipboardData(text: currentUrl));
                   String message = '${Config.messageUrlCopied}\n$currentUrl';
-                  _showTopSnackBar(context, message);
+                  if (mounted) {
+                    // ignore: use_build_context_synchronously
+                    _showTopSnackBar(context, message);
+                  }
                 }
               },
             ),
@@ -151,13 +172,13 @@ class _ShopPageDetail extends ConsumerState<ShopDetailPage> {
                       ElevatedButton(
                         onPressed: () {
                           ref
-                              .read(StampProvider(context, userId, shopId)
+                              .read(stampProvider(context, userId, shopId)
                                   .notifier)
                               .addStamp(context, userId, shopId);
                         },
                         style: ElevatedButton.styleFrom(
                           foregroundColor: Colors.black,
-                          backgroundColor: Config.colorFromRGBOBeer,
+                          backgroundColor: Config.colorFromRGBOBcrdBase,
                           padding: EdgeInsets.symmetric(
                               vertical: 12, horizontal: 18),
                         ),
@@ -190,7 +211,7 @@ class _ShopPageDetail extends ConsumerState<ShopDetailPage> {
                             return;
                           }
                           ref
-                              .read(StampProvider(context, userId, shopId)
+                              .read(stampProvider(context, userId, shopId)
                                   .notifier)
                               .deleteStamp(context, userId, shopId);
                         },
@@ -251,7 +272,7 @@ class _ShopPageDetail extends ConsumerState<ShopDetailPage> {
           color: Colors.transparent,
           child: Container(
             padding: EdgeInsets.all(2.0),
-            color: Config.colorFromRGBOBeerDark,
+            color: Config.colorFromRGBOBcrdBase,
             child: SafeArea(
               child: Text(
                 message,
@@ -299,7 +320,7 @@ class _ShopPageDetail extends ConsumerState<ShopDetailPage> {
     // ブラウザでGoogle Mapsを開く
     else if (await canLaunchUrl(browserUrl)) {
       await launchUrl(browserUrl);
-    } else {
+    } else if (mounted) {
       // どれも起動できない場合のエラーメッセージ
       Util.showAlertDialog(
           context, Config.messageMapCannotOpened, Config.buttonLabelClose);

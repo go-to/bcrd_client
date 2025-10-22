@@ -7,7 +7,7 @@ part of 'selected_marker_icon_provider.dart';
 // **************************************************************************
 
 String _$selectedMarkerIconHash() =>
-    r'd7687934e5441918c4377fb64a10ec9826887c4f';
+    r'bee01efa8faf2615cc928e1b036b268069400749';
 
 /// See also [selectedMarkerIcon].
 @ProviderFor(selectedMarkerIcon)

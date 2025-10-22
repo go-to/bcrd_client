@@ -1,5 +1,5 @@
-name: egp_client
-description: "ebisu-gp app"
+name: bcrd_client
+description: "bcrd app"
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -16,10 +16,10 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 0.2.0+12
+version: 0.0.1+1
 
 environment:
-  sdk: ^3.6.0
+  sdk: '>=3.6.0 <4.0.0'
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -34,29 +34,29 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
-  google_maps_flutter: ^2.10.0
-  google_maps_flutter_web: ^0.5.10
-  http: ^1.3.0
-  json_serializable: ^6.9.2
-  geolocator: ^13.0.2
-  webview_flutter: ^4.10.0
-  protobuf: ^3.1.0
-  grpc: ^4.0.1
+  google_maps_flutter: ^2.12.3
+  google_maps_flutter_web: ^0.5.13
+  http: ^1.5.0
+  json_serializable: ^6.9.0
+  geolocator: ^14.0.2
+  webview_flutter: ^4.13.0
+  protobuf: ^4.2.0
+  grpc: ^4.1.0
   hooks_riverpod: ^2.6.1
-  flutter_hooks: ^0.20.5
-  flutter_dotenv: ^5.2.1
+  flutter_hooks: ^0.21.3+1
+  flutter_dotenv: ^6.0.0
   widget_to_marker: ^1.0.6
   flutter_riverpod: ^2.6.1
   riverpod_annotation: ^2.6.1
-  google_fonts: ^6.2.1
-  firebase_core: ^3.11.0
-  firebase_auth: ^5.4.2
-  cloud_firestore: ^5.6.3
-  provider: ^6.1.2
+  google_fonts: ^6.3.0
+  firebase_core: ^4.0.0
+  firebase_auth: ^6.0.1
+  cloud_firestore: ^6.0.0
+  provider: ^6.1.5+1
   fixnum: ^1.1.1
-  flutter_launcher_icons: ^0.14.3
-  flutter_native_splash: ^2.4.4
-  url_launcher: ^6.3.1
+  flutter_launcher_icons: ^0.14.4
+  flutter_native_splash: ^2.4.6
+  url_launcher: ^6.3.2
   shared_preferences: ^2.5.3
 
 dev_dependencies:
@@ -68,11 +68,11 @@ dev_dependencies:
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
-  flutter_lints: ^5.0.0
-  build_runner: ^2.4.14
-  riverpod_generator: ^2.6.4
-  custom_lint: ^0.7.1
-  riverpod_lint: ^2.6.4
+  flutter_lints: ^6.0.0
+  build_runner: ^2.5.4
+  riverpod_generator: ^2.6.5
+  custom_lint: ^0.7.0
+  riverpod_lint: ^2.6.5
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -93,6 +93,9 @@ flutter:
     - assets/images/shop_selected.png
     - assets/images/done.png
     - assets/images/done_selected.png
+    - assets/images/bacardi.png
+    - assets/images/highball.png
+    - assets/images/instagram.png
 
   fonts:
     - family: Custom
@@ -134,11 +137,11 @@ flutter_icons:
   android: true
   ios: true
   remove_alpha_ios: true
-  image_path: "assets/images/icon.png"
-  adaptive_icon_background: "#fff422"
-  adaptive_icon_foreground: "assets/images/icon.png"
+  image_path: "assets/images/highball.png"
+  adaptive_icon_background: "#91bb98"
+  adaptive_icon_foreground: "assets/images/highball.png"
 
 flutter_native_splash:
-  image: "assets/images/icon.png"
-  color: "#e4d012"
-  icon_background_color: "#e4d012"
+  image: "assets/images/highball.png"
+  color: "#91bb98"
+  icon_background_color: "#91bb98"

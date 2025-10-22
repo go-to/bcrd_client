@@ -3,49 +3,46 @@ import 'dart:collection';
 import 'dart:core';
 import 'dart:ui' as ui;
 
-import 'package:egp_client/grpc_gen/egp.pb.dart';
-import 'package:egp_client/provider/search_condition_provider.dart';
-import 'package:egp_client/provider/search_keyword_provider.dart';
-import 'package:egp_client/provider/sort_order_provider.dart';
+import 'package:bcrd_client/grpc_gen/bcrd.pb.dart';
+import 'package:bcrd_client/provider/search_condition_provider.dart';
+import 'package:bcrd_client/provider/search_keyword_provider.dart';
+import 'package:bcrd_client/provider/sort_order_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
 import '../common/util.dart';
 import '../const/config.dart';
-import '../grpc_gen/egp.pb.dart' as pb;
+import '../grpc_gen/bcrd.pb.dart' as pb;
 import '../provider/marker_provider.dart';
 import '../provider/shop_provider.dart';
 import '../service/shop_service.dart';
+import '../service/marker_cache_service.dart';
 import '../view/shop_detail_page.dart';
 import '../icon/custom_icons.dart' as custom_icon;
 
 class CustomMarker {
   final String id;
   final int no;
-  final CategoryType categoryId;
   final LatLng position;
   final double zIndex;
   final bool inCurrentSales;
   final bool isStamped;
   final bool isIrregularHoliday;
-  final bool needsReservation;
-  final String imageUrl;
   BitmapDescriptor? icon;
 
   CustomMarker({
     required this.id,
     required this.no,
-    required this.categoryId,
     required this.position,
     required this.zIndex,
     required this.inCurrentSales,
     required this.isStamped,
     required this.isIrregularHoliday,
-    required this.needsReservation,
-    required this.imageUrl,
     this.icon,
   });
 }
@@ -70,14 +67,18 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
   Position? currentPosition;
   final _markerQueue = Queue<CustomMarker>();
   bool _isUpdating = false;
+  bool _isDisposed = false;
   int shopsTotalNum = 0;
+  DateTime? _lastLocationUpdate;
+  Timer? _locationUpdateTimer;
+  WebViewController? _preloadController;
 
   final _pageController = PageController(
     viewportFraction: 0.85,
   );
 
   final LocationSettings locationSettings = const LocationSettings(
-    accuracy: LocationAccuracy.high,
+    accuracy: LocationAccuracy.medium,
     distanceFilter: Config.locationDistanceFilter,
   );
 
@@ -97,18 +98,40 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
   @override
   void initState() {
     super.initState();
-    _startPositionStream();
     _markers = {};
     _customMarkers = [];
-    _setShopsTotal();
-    _initializeMarkers();
     _draggableController = DraggableScrollableController();
     _scrollController = ScrollController();
+
+    // 非同期処理は別途実行
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _safeProviderUpdate(() {
+        ref.read(searchConditionProvider.notifier).resetSearchCondition();
+        ref.read(searchKeywordProvider.notifier).resetSearchKeyword();
+        ref.read(sortOrderProvider.notifier).resetSortOrder();
+        _startPositionStream();
+        _setShopsTotal();
+        _initializeMarkers();
+      });
+    });
   }
 
   void _resetBottomSheet() {
-    _draggableController.reset();
-    _draggableController = DraggableScrollableController();
+    if (_isDisposed || !mounted) return;
+
+    try {
+      if (_draggableController.isAttached) {
+        _draggableController.reset();
+      }
+      // 既存のコントローラーを安全に破棄して新規作成
+      if (_draggableController.isAttached) {
+        _draggableController.dispose();
+      }
+      _draggableController = DraggableScrollableController();
+    } catch (e) {
+      // エラーが発生した場合は新規作成のみ行う
+      _draggableController = DraggableScrollableController();
+    }
   }
 
   void _setShopsTotal() async {
@@ -123,9 +146,6 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
       _setCustomMarkers(shops);
       final tempMarkers = shops.shops.map(_createTempMarker).toList();
       _updateMarkers(tempMarkers);
-
-      // カスタムマーカー生成
-      _createCustomMarkers();
     }
   }
 
@@ -177,12 +197,12 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
     } else if (marker.isStamped) {
       zIndex = 0.0;
     }
-    final icon = await _generateCustomIcon(marker, selectedMarkerId);
+    final icon = await _generateCustomIconWithCache(marker, selectedMarkerId);
     return Marker(
       markerId: MarkerId(marker.id),
       position: marker.position,
       icon: icon,
-      zIndex: zIndex,
+      zIndexInt: zIndex.toInt(),
     );
   }
 
@@ -196,12 +216,16 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
           position: marker.position,
         ).copyWith(
           iconParam: marker.icon,
-          zIndexParam: marker.zIndex,
+          zIndexIntParam: marker.zIndexInt,
           onTapParam: () {
+            if (!mounted || _isDisposed) return;
+
             // ボトムシートの高さを初期状態に戻す
             _resetBottomSheet();
             ref.read(selectedMarkerProvider.notifier).selectMarker(markerId);
             _createCustomMarkers(markerId);
+            // WebViewのURLをプレロード
+            _preloadWebViewForMarker(markerId);
           },
         );
       }
@@ -215,18 +239,43 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
         CustomMarker(
           id: shop.id.toString(),
           no: shop.no,
-          categoryId: shop.categoryId,
           position: LatLng(shop.latitude, shop.longitude),
           zIndex: 0.0,
           inCurrentSales: shop.inCurrentSales,
           isStamped: shop.isStamped,
           isIrregularHoliday: shop.isIrregularHoliday,
-          needsReservation: shop.normalizedNeedsReservation,
-          imageUrl: shop.menuImageUrl,
           icon: shopDefaultIcon,
         ),
       );
     }
+  }
+
+  Future<BitmapDescriptor> _generateCustomIconWithCache(CustomMarker marker,
+      [MarkerId? selectedMarkerId]) async {
+    final cacheService = MarkerCacheService();
+
+    // キャッシュキーを生成
+    final isSelected =
+        selectedMarkerId != null && selectedMarkerId.value == marker.id;
+    final cacheKey = _generateMarkerCacheKey(marker, isSelected);
+
+    // キャッシュから取得を試行
+    final cachedIcon = cacheService.getFromCache(cacheKey);
+    if (cachedIcon != null) {
+      return cachedIcon;
+    }
+
+    // キャッシュにない場合は新規生成
+    final icon = await _generateCustomIcon(marker, selectedMarkerId);
+
+    // キャッシュに保存
+    cacheService.saveToCache(cacheKey, icon);
+
+    return icon;
+  }
+
+  String _generateMarkerCacheKey(CustomMarker marker, bool isSelected) {
+    return '${marker.id}_${marker.no}_${marker.inCurrentSales}_${marker.isStamped}_${marker.isIrregularHoliday}_$isSelected';
   }
 
   Future<BitmapDescriptor> _generateCustomIcon(CustomMarker marker,
@@ -252,22 +301,19 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
       // 営業時間内
       if (marker.inCurrentSales) {
         textColor = Colors.black;
-        // 要予約
-        if (marker.needsReservation) {
-          textLabel = Config.needsReservation;
-        } else if (marker.isIrregularHoliday) {
-          // 不定休
+        // 不定休
+        if (marker.isIrregularHoliday) {
           textLabel = Config.irregularHoliday;
         }
       }
+      final bgPaint = Paint()
+        ..color = Config.colorFromRGBOBcrdDeep.withAlpha(200);
+      canvas.drawCircle(Offset(size / 2, size / 2), size / 2, bgPaint);
       // 営業時間内
     } else if (marker.inCurrentSales) {
       textColor = Colors.black;
-      // 要予約
-      if (marker.needsReservation) {
-        textLabel = Config.needsReservation;
-        // 不定休
-      } else if (marker.isIrregularHoliday) {
+      // 不定休
+      if (marker.isIrregularHoliday) {
         textLabel = Config.irregularHoliday;
       }
     }
@@ -338,9 +384,7 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
       );
 
       // 通常営業以外の場合は情報を描画
-      if (!marker.inCurrentSales ||
-          marker.isIrregularHoliday ||
-          marker.needsReservation) {
+      if (!marker.inCurrentSales || marker.isIrregularHoliday) {
         final textPainter = TextPainter(
           text: TextSpan(
             text: textLabel,
@@ -363,27 +407,7 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
     }
 
     // 枠線にカテゴリの色を表示
-    Color borderColor = Colors.black;
-    switch (marker.categoryId) {
-      case CategoryType.CATEGORY_TYPE_BEER_COCKTAIL:
-        borderColor = Color(0xFF494967);
-        break;
-      case CategoryType.CATEGORY_TYPE_EBISU_1:
-        borderColor = Color(0xFF7456D9);
-        break;
-      case CategoryType.CATEGORY_TYPE_EBISU_2:
-        borderColor = Color(0xFF8BC0F0);
-        break;
-      case CategoryType.CATEGORY_TYPE_EBISU_SOUTH:
-        borderColor = Color(0xFFD59B60);
-        break;
-      case CategoryType.CATEGORY_TYPE_EBISU_WEST:
-        borderColor = Color(0xFFF0E157);
-        break;
-      case CategoryType.CATEGORY_TYPE_NONE:
-        borderColor = Color(0xFF454545);
-        break;
-    }
+    Color borderColor = Config.colorFromRGBOBcrdBase;
     // 枠線を描画
     final borderPaint = Paint()
       ..color = borderColor
@@ -406,14 +430,142 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
     });
   }
 
+  void _preloadWebViewForMarker(MarkerId markerId) async {
+    if (!mounted || _isDisposed) return;
+
+    final shopListAsync = ref.read(shopProvider(context));
+    shopListAsync.whenData((shops) {
+      if (!mounted || _isDisposed) return;
+
+      if (shops != null) {
+        final shop = shops.shops.firstWhere(
+          (shop) => shop.id.toString() == markerId.value,
+          orElse: () => shops.shops.first,
+        );
+
+        var webviewUrl = '';
+        if (shop.googleUrl != '') {
+          webviewUrl = shop.googleUrl;
+        }
+        // if (shop.tabelogUrl != '') {
+        //   webviewUrl = shop.tabelogUrl;
+        // }
+
+        // 既存のWebViewControllerを破棄
+        _preloadController = null;
+
+        // 新しいWebViewControllerを作成してURLをプレロード
+        _preloadController = WebViewController()
+          ..setJavaScriptMode(JavaScriptMode.unrestricted)
+          ..setNavigationDelegate(NavigationDelegate(
+            onNavigationRequest: (request) {
+              if (request.url.contains('ads')) {
+                return NavigationDecision.prevent;
+              }
+              return NavigationDecision.navigate;
+            },
+          ))
+          ..loadRequest(Uri.parse(webviewUrl));
+      }
+    });
+  }
+
   @override
   void dispose() {
+    _isDisposed = true;
+    // キャッシュクリア（メモリリークを防ぐため）
+    MarkerCacheService().clearCache();
+    _locationUpdateTimer?.cancel();
+
+    // ScrollControllerの安全な破棄
+    try {
+      if (_scrollController.hasClients) {
+        _scrollController.dispose();
+      }
+    } catch (e) {
+      // 既にdisposeされている場合は無視
+    }
+
+    // DraggableScrollableControllerの安全な破棄
+    try {
+      if (_draggableController.isAttached) {
+        _draggableController.dispose();
+      }
+    } catch (e) {
+      // 既にdisposeされている場合は無視
+    }
+
+    // PageControllerの安全な破棄
+    try {
+      if (_pageController.hasClients) {
+        _pageController.dispose();
+      }
+    } catch (e) {
+      // 既にdisposeされている場合は無視
+    }
+
+    // その他のコントローラー
+    try {
+      _searchController.dispose();
+    } catch (e) {
+      // 既にdisposeされている場合は無視
+    }
+
+    try {
+      _mapController.dispose();
+    } catch (e) {
+      // 既にdisposeされている場合は無視
+    }
+
     _positionStream?.cancel();
-    _scrollController.dispose();
-    _draggableController.dispose();
-    _pageController.dispose();
-    _mapController.dispose();
+    _preloadController = null;
     super.dispose();
+  }
+
+  void _safeProviderUpdate(VoidCallback updateCallback) {
+    if (_isDisposed || !mounted) return;
+
+    // 小さな遅延を追加してUIの更新サイクルとの競合を回避
+    Future.delayed(const Duration(milliseconds: 1), () {
+      if (_isDisposed || !mounted) return;
+
+      runZonedGuarded(() {
+        if (_isDisposed || !mounted) return;
+
+        try {
+          updateCallback();
+        } catch (e) {
+          final errorMessage = e.toString();
+          if (errorMessage
+                  .contains('_lifecycleState != _ElementLifecycle.defunct') ||
+              errorMessage.contains('markNeedsBuild') ||
+              errorMessage.contains('ConsumerStatefulElement') ||
+              errorMessage.contains('disposed') ||
+              errorMessage.contains('defunct')) {
+            // lifecycle関連のエラーは無視
+            return;
+          }
+
+          if (!_isDisposed && mounted) {
+            debugPrint('Provider update error: $e');
+          }
+        }
+      }, (error, stackTrace) {
+        final errorMessage = error.toString();
+        if (errorMessage
+                .contains('_lifecycleState != _ElementLifecycle.defunct') ||
+            errorMessage.contains('markNeedsBuild') ||
+            errorMessage.contains('ConsumerStatefulElement') ||
+            errorMessage.contains('disposed') ||
+            errorMessage.contains('defunct')) {
+          return;
+        }
+
+        if (!_isDisposed && mounted) {
+          debugPrint('Provider update error: $error');
+        }
+      });
+    });
   }
 
   // 現在地ストリームを開始
@@ -430,21 +582,27 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
           Geolocator.getPositionStream(locationSettings: locationSettings)
               .listen(
         (Position position) {
-          // カメラを現在地に移動
-          if (!_mapCreated) {
-            CircularProgressIndicator();
-          } else {
-            _mapController.animateCamera(
-              CameraUpdate.newLatLng(_kGooglePlex.target),
-            );
+          // 現在地を保存
+          currentPosition = position;
+
+          // 位置情報更新の間隔制御
+          final now = DateTime.now();
+          if (_lastLocationUpdate == null ||
+              now.difference(_lastLocationUpdate!).inMilliseconds >=
+                  Config.locationUpdateIntervalMs) {
+            _lastLocationUpdate = now;
+
+            // 位置情報が更新されたらマーカーを更新
+            _searchShops(false);
           }
-          setState(() {});
         },
         onError: (e) {
-          print(Util.sprintf(
+          debugPrint(Util.sprintf(
               Config.errorDetail, [Config.failedToGetLocationInformation, e]));
-          Util.showAlertDialog(context, Config.failedToGetLocationInformation,
-              Config.buttonLabelClose);
+          if (mounted) {
+            Util.showAlertDialog(context, Config.failedToGetLocationInformation,
+                Config.buttonLabelClose);
+          }
         },
       );
     }
@@ -471,6 +629,7 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
     final position = await _getCurrentPosition();
     final latitude = position.latitude;
     final longitude = position.longitude;
+    if (!mounted) return null;
 
     // 店舗情報を取得
     final shops = await ref.read(shopProvider(context).notifier).getShops(
@@ -500,11 +659,17 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
 
   // キーワード検索
   void _keywordSearch() async {
+    if (!mounted) return;
+
     final query = _searchController.text.trim();
+
     // 検索キーワードを設定
     ref.read(searchKeywordProvider.notifier).setSearchKeyword(query);
+
     // 店舗情報を取得
-    _searchShops();
+    if (mounted) {
+      _searchShops();
+    }
   }
 
   @override
@@ -531,30 +696,35 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
               if (_locationPermissionGranted) {
                 return Stack(
                   children: [
-                    GoogleMap(
-                      mapType: MapType.normal,
-                      initialCameraPosition: _kGooglePlex,
-                      myLocationEnabled: true,
-                      myLocationButtonEnabled: false,
-                      zoomControlsEnabled: false,
-                      onMapCreated: (GoogleMapController controller) async {
-                        final googleMapStyle = await rootBundle
-                            .loadString(Config.googleMapStyleJsonPath);
-                        if (Theme.of(context).brightness == Brightness.dark) {
-                          await controller.setMapStyle(googleMapStyle);
-                        }
-                        _mapController = controller;
-                        setState(() {
-                          _mapCreated = true;
-                        });
+                    FutureBuilder<String>(
+                      future: Theme.of(context).brightness == Brightness.dark
+                          ? rootBundle.loadString(Config.googleMapStyleJsonPath)
+                          : Future.value(''),
+                      builder: (context, snapshot) {
+                        return GoogleMap(
+                          mapType: MapType.normal,
+                          initialCameraPosition: _kGooglePlex,
+                          myLocationEnabled: true,
+                          myLocationButtonEnabled: false,
+                          zoomControlsEnabled: false,
+                          style: snapshot.hasData && snapshot.data!.isNotEmpty
+                              ? snapshot.data!
+                              : null,
+                          onMapCreated: (GoogleMapController controller) async {
+                            _mapController = controller;
+                            setState(() {
+                              _mapCreated = true;
+                            });
+                          },
+                          onTap: (LatLng position) async {
+                            ref
+                                .read(selectedMarkerProvider.notifier)
+                                .clearSelection();
+                            _createCustomMarkers();
+                          },
+                          markers: _markers.values.toSet(),
+                        );
                       },
-                      onTap: (LatLng position) async {
-                        ref
-                            .read(selectedMarkerProvider.notifier)
-                            .clearSelection();
-                        _createCustomMarkers();
-                      },
-                      markers: _markers.values.toSet(),
                     ),
                     if (!_mapCreated)
                       const Center(child: CircularProgressIndicator()),
@@ -562,20 +732,22 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                 );
               } else {
                 return Center(
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      final permissionGranted =
-                          await _checkLocationPermission();
+                  child: !_mapCreated
+                      ? const CircularProgressIndicator()
+                      : ElevatedButton(
+                          onPressed: () async {
+                            final permissionGranted =
+                                await _checkLocationPermission();
 
-                      // 権限が許可された場合にGoogleMapを再ビルド
-                      if (permissionGranted) {
-                        setState(() {
-                          _locationPermissionGranted = true;
-                        });
-                      }
-                    },
-                    child: Text(Config.allowLocationInformation),
-                  ),
+                            // 権限が許可された場合にGoogleMapを再ビルド
+                            if (permissionGranted) {
+                              setState(() {
+                                _locationPermissionGranted = true;
+                              });
+                            }
+                          },
+                          child: const Text(Config.allowLocationInformation),
+                        ),
                 );
               }
             },
@@ -630,11 +802,17 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                                   suffixIcon: IconButton(
                                       icon: Icon(Icons.clear),
                                       onPressed: (() {
-                                        _searchController.clear();
-                                        _keywordSearch();
+                                        if (mounted) {
+                                          _searchController.clear();
+                                          _keywordSearch();
+                                        }
                                       })),
                                 ),
-                                onSubmitted: (text) => _keywordSearch(),
+                                onSubmitted: (text) {
+                                  if (mounted) {
+                                    _keywordSearch();
+                                  }
+                                },
                               ),
                             ],
                           ),
@@ -762,40 +940,61 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                     controller: _pageController,
                     itemCount: _markers.length,
                     onPageChanged: (index) async {
-                      final markerId = _markers.values.toList()[index].markerId;
-                      if (index != selectedIndex) {
-                        // 選択状態のマーカーを更新
-                        ref
-                            .read(selectedMarkerProvider.notifier)
-                            .selectMarker(markerId);
-                        // 選択した店舗のマーカーを変更
-                        _createCustomMarkers(markerId);
-                      }
-                      // スワイプ後のお店の座標までカメラを移動
-                      final shop = shops!.shops[index];
-                      _mapController.animateCamera(CameraUpdate.newLatLng(
-                          LatLng(shop.latitude, shop.longitude)));
+                      if (!mounted || _isDisposed) return;
+
+                      // 非同期で処理を実行し、UIの更新サイクルを避ける
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (!mounted || _isDisposed) return;
+
+                        final markerId =
+                            _markers.values.toList()[index].markerId;
+                        if (index != selectedIndex) {
+                          // 選択状態のマーカーを更新
+                          if (!mounted || _isDisposed) return;
+                          ref
+                              .read(selectedMarkerProvider.notifier)
+                              .selectMarker(markerId);
+                          // 選択した店舗のマーカーを変更
+                          _createCustomMarkers(markerId);
+                          // WebViewのURLをプレロード
+                          _preloadWebViewForMarker(markerId);
+                        }
+                        // スワイプ後のお店の座標までカメラを移動
+                        if (mounted && !_isDisposed) {
+                          final shop = shops!.shops[index];
+                          _mapController.animateCamera(CameraUpdate.newLatLng(
+                              LatLng(shop.latitude, shop.longitude)));
+                        }
+                      });
                     },
                     itemBuilder: (context, index) {
                       final shop = shops!.shops[index];
                       final attributes = {
-                        Config.shopCardAttributeMenu: shop.menuName,
                         Config.shopCardAttributeAddress: shop.address,
-                        Config.shopCardAttributeBusinessHours:
-                            shop.businessHours,
+                        // Config.shopCardAttributeBusinessHours:
+                        //     shop.businessHours,
                       };
                       return GestureDetector(
                           onTap: () async {
-                            final result =
-                                await Navigator.of(context).push<bool>(
+                            await Navigator.of(context).push<bool>(
                               MaterialPageRoute(builder: (context) {
                                 final shop = shops.shops.elementAt(index);
+                                var webviewUrl = '';
+                                if (shop.googleUrl != '') {
+                                  webviewUrl = shop.googleUrl;
+                                }
+                                // if (shop.tabelogUrl != '') {
+                                //   webviewUrl = shop.tabelogUrl;
+                                // }
+
                                 return ShopDetailPage(
                                     year: shop.year,
                                     no: shop.no,
                                     shopId: shop.id.toInt(),
                                     shopName: shop.shopName,
-                                    address: shop.address);
+                                    address: shop.address,
+                                    webviewUrl: webviewUrl,
+                                    preloadedController: _preloadController);
                               }),
                             ).then((onValue) async {
                               // 遷移先ページから戻ってきたあとの処理
@@ -834,7 +1033,7 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                                           borderRadius:
                                               BorderRadius.circular(8),
                                           child: Image.network(
-                                            shop.menuImageUrl,
+                                            shop.imageUrl,
                                             fit: BoxFit.contain,
                                             loadingBuilder: (context, child,
                                                 loadingProgress) {
@@ -870,19 +1069,61 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                                         child: Column(
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
-                                          children:
-                                              attributes.entries.map((entry) {
-                                            return Padding(
-                                              padding:
-                                                  EdgeInsets.only(bottom: 4),
-                                              child: Text(
-                                                '${entry.key}: ${entry.value}',
-                                                style: TextStyle(
-                                                    fontSize: Config
-                                                        .fontSizeVerySmall),
-                                              ),
-                                            );
-                                          }).toList(),
+                                          children: attributes.entries
+                                                  .map((entry) {
+                                                return Padding(
+                                                  padding: EdgeInsets.only(
+                                                      bottom: 4),
+                                                  child: Text(
+                                                    '${entry.key}: ${entry.value}',
+                                                    style: TextStyle(
+                                                        fontSize: Config
+                                                            .fontSizeVerySmall),
+                                                  ),
+                                                );
+                                              }).toList() +
+                                              [
+                                                (shop.instagramUrl != '')
+                                                    ? Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .only(top: 10),
+                                                        child: GestureDetector(
+                                                          onTap: () async {
+                                                            if (shop.instagramUrl ==
+                                                                '') {
+                                                              return;
+                                                            }
+                                                            Uri url = Uri.parse(
+                                                                shop.instagramUrl);
+                                                            if (!await launchUrl(
+                                                                url,
+                                                                mode: LaunchMode
+                                                                    .externalApplication)) {
+                                                              throw Exception(
+                                                                  'URLを開けませんでした');
+                                                            }
+                                                          },
+                                                          child: Image.asset(
+                                                            Config
+                                                                .instagramImagePath,
+                                                            width: 30,
+                                                          ),
+                                                        ))
+                                                    : Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .only(top: 10),
+                                                        child: Opacity(
+                                                          opacity: 0.1,
+                                                          child: Image.asset(
+                                                            Config
+                                                                .instagramImagePath,
+                                                            width: 30,
+                                                          ),
+                                                        ),
+                                                      ),
+                                              ],
                                         ),
                                       ),
                                     ),
@@ -1020,7 +1261,9 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                                           .read(sortOrderProvider.notifier)
                                           .setSortOrder(value);
                                       // 店舗情報を取得
-                                      _searchShops();
+                                      if (mounted) {
+                                        _searchShops();
+                                      }
                                       // スクロール位置をリセット
                                       // scrollController.jumpTo(0);
                                     }
@@ -1044,12 +1287,12 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                                         final shop =
                                             shops.shops.elementAt(index);
                                         final attributes = {
-                                          Config.shopCardAttributeMenu:
-                                              shop.menuName,
+                                          // Config.shopCardAttributeMenu:
+                                          //     shop.menuName,
                                           Config.shopCardAttributeAddress:
                                               shop.address,
-                                          Config.shopCardAttributeBusinessHours:
-                                              shop.businessHours,
+                                          // Config.shopCardAttributeBusinessHours:
+                                          //     shop.businessHours,
                                         };
                                         return GestureDetector(
                                           onTap: () async {
@@ -1059,12 +1302,22 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                                                   builder: (context) {
                                                 final shop = shops.shops
                                                     .elementAt(index);
+                                                var webviewUrl = '';
+                                                if (shop.googleUrl != '') {
+                                                  webviewUrl = shop.googleUrl;
+                                                }
+                                                // if (shop.tabelogUrl != '') {
+                                                //   webviewUrl = shop.tabelogUrl;
+                                                // }
+
                                                 return ShopDetailPage(
                                                     year: shop.year,
                                                     no: shop.no,
                                                     shopId: shop.id.toInt(),
                                                     shopName: shop.shopName,
-                                                    address: shop.address);
+                                                    address: shop.address,
+                                                    webviewUrl: webviewUrl,
+                                                    preloadedController: null);
                                               }),
                                             ).then((onValue) async {
                                               // 遷移先ページから戻ってきたあとの処理
@@ -1094,7 +1347,7 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                                                               BorderRadius
                                                                   .circular(8),
                                                           child: Image.network(
-                                                            shop.menuImageUrl,
+                                                            shop.imageUrl,
                                                             fit: BoxFit.cover,
                                                             height: 140,
                                                             width: 160,
@@ -1143,7 +1396,7 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                                                               scale: 1.2,
                                                               child: Image.asset(
                                                                   Config
-                                                                      .isStampedSelectedImagePath,
+                                                                      .isStampedSelectedTextImagePath,
                                                                   width: 150,
                                                                   height: 150),
                                                             ),
@@ -1198,6 +1451,10 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                                                           child:
                                                               GestureDetector(
                                                             onTap: () {
+                                                              if (!mounted ||
+                                                                  _isDisposed)
+                                                                return;
+
                                                               // 選択したマーカーIDを取得
                                                               final markerId =
                                                                   MarkerId(shop
@@ -1246,8 +1503,13 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                                                                       markerId);
                                                               _createCustomMarkers(
                                                                   markerId);
+                                                              // WebViewのURLをプレロード
+                                                              _preloadWebViewForMarker(
+                                                                  markerId);
 
-                                                              if (needsUpdateAnimateCamera) {
+                                                              if (needsUpdateAnimateCamera &&
+                                                                  mounted &&
+                                                                  !_isDisposed) {
                                                                 // スワイプ後のお店の座標までカメラを移動
                                                                 _mapController.animateCamera(
                                                                     CameraUpdate.newLatLng(LatLng(
@@ -1268,8 +1530,8 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                                                                         4),
                                                                 decoration:
                                                                     BoxDecoration(
-                                                                  color: Colors
-                                                                      .amberAccent,
+                                                                  color: Config
+                                                                      .colorFromRGBOBcrdBase,
                                                                   borderRadius:
                                                                       BorderRadius
                                                                           .circular(
@@ -1332,7 +1594,61 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
                                                                       .fontSizeVerySmall),
                                                             ),
                                                           );
-                                                        }).toList(),
+                                                        }).toList() +
+                                                        [
+                                                          (shop.instagramUrl !=
+                                                                  '')
+                                                              ? Padding(
+                                                                  padding:
+                                                                      const EdgeInsets
+                                                                          .only(
+                                                                          top:
+                                                                              10),
+                                                                  child:
+                                                                      GestureDetector(
+                                                                    onTap:
+                                                                        () async {
+                                                                      if (shop.instagramUrl ==
+                                                                          '') {
+                                                                        return;
+                                                                      }
+                                                                      Uri url =
+                                                                          Uri.parse(
+                                                                              shop.instagramUrl);
+                                                                      if (!await launchUrl(
+                                                                          url,
+                                                                          mode:
+                                                                              LaunchMode.externalApplication)) {
+                                                                        throw Exception(
+                                                                            'URLを開けませんでした');
+                                                                      }
+                                                                    },
+                                                                    child: Image
+                                                                        .asset(
+                                                                      Config
+                                                                          .instagramImagePath,
+                                                                      width: 30,
+                                                                    ),
+                                                                  ))
+                                                              : Padding(
+                                                                  padding:
+                                                                      const EdgeInsets
+                                                                          .only(
+                                                                          top:
+                                                                              10),
+                                                                  child:
+                                                                      Opacity(
+                                                                    opacity:
+                                                                        0.1,
+                                                                    child: Image
+                                                                        .asset(
+                                                                      Config
+                                                                          .instagramImagePath,
+                                                                      width: 30,
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                        ],
                                                   ),
                                                 ),
                                               ],
@@ -1400,18 +1716,23 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
 
     return ElevatedButton(
       onPressed: () async {
+        if (!mounted) return;
+
         // ボタンの選択状態を設定
         ref
             .read(searchConditionProvider.notifier)
             .setSearchCondition(searchKey);
         // 検索キーワードを設定
         ref.read(searchKeywordProvider.notifier).setSearchKeyword(keyword);
+
         // 店舗情報を取得
-        _searchShops();
+        if (mounted) {
+          _searchShops();
+        }
       },
       style: ElevatedButton.styleFrom(
         backgroundColor: selectedKeys.contains(searchKey)
-            ? Colors.amberAccent
+            ? Config.colorFromRGBOBcrdBase
             : colorScheme.surface,
       ),
       child: Text(label,
@@ -1508,6 +1829,7 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
 
     // 位置情報サービスが有効か確認
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!mounted) return false;
     if (!serviceEnabled) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(Config.pleaseEnableLocationServices)),
@@ -1519,6 +1841,7 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
     permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
+      if (!mounted) return false;
       if (permission == LocationPermission.denied) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(Config.locationPermissionDenied)),
@@ -1528,6 +1851,7 @@ class _ShopListPageState extends ConsumerState<ShopListPage> {
     }
 
     if (permission == LocationPermission.deniedForever) {
+      if (!mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(Config.locationPermissionPermanentlyDenied)),
       );

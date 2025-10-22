@@ -18,4 +18,8 @@ class SearchKeyword extends _$SearchKeyword {
     state = keyword;
     return getSearchKeyword();
   }
+
+  void resetSearchKeyword() {
+    state = '';
+  }
 }

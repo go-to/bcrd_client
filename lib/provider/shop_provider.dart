@@ -1,6 +1,6 @@
-import 'package:egp_client/grpc_gen/egp.pb.dart';
-import 'package:egp_client/service/auth_service.dart';
-import 'package:egp_client/service/shop_service.dart';
+import 'package:bcrd_client/grpc_gen/bcrd.pb.dart';
+import 'package:bcrd_client/service/auth_service.dart';
+import 'package:bcrd_client/service/shop_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';

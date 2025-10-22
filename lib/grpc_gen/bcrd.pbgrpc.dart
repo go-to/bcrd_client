@@ -1,6 +1,6 @@
 //
 //  Generated code. Do not modify.
-//  source: egp.proto
+//  source: bcrd.proto
 //
 // @dart = 2.12
 
@@ -15,34 +15,38 @@ import 'dart:core' as $core;
 import 'package:grpc/service_api.dart' as $grpc;
 import 'package:protobuf/protobuf.dart' as $pb;
 
-import 'egp.pb.dart' as $0;
+import 'bcrd.pb.dart' as $0;
 
-export 'egp.pb.dart';
+export 'bcrd.pb.dart';
 
-@$pb.GrpcServiceName('egp.EgpService')
-class EgpServiceClient extends $grpc.Client {
+@$pb.GrpcServiceName('bcrd.BcrdService')
+class BcrdServiceClient extends $grpc.Client {
   static final _$getShopsTotal = $grpc.ClientMethod<$0.ShopsTotalRequest, $0.ShopsTotalResponse>(
-      '/egp.EgpService/GetShopsTotal',
+      '/bcrd.BcrdService/GetShopsTotal',
       ($0.ShopsTotalRequest value) => value.writeToBuffer(),
       ($core.List<$core.int> value) => $0.ShopsTotalResponse.fromBuffer(value));
   static final _$getShops = $grpc.ClientMethod<$0.ShopsRequest, $0.ShopsResponse>(
-      '/egp.EgpService/GetShops',
+      '/bcrd.BcrdService/GetShops',
       ($0.ShopsRequest value) => value.writeToBuffer(),
       ($core.List<$core.int> value) => $0.ShopsResponse.fromBuffer(value));
   static final _$getShop = $grpc.ClientMethod<$0.ShopRequest, $0.ShopResponse>(
-      '/egp.EgpService/GetShop',
+      '/bcrd.BcrdService/GetShop',
       ($0.ShopRequest value) => value.writeToBuffer(),
       ($core.List<$core.int> value) => $0.ShopResponse.fromBuffer(value));
   static final _$addStamp = $grpc.ClientMethod<$0.StampRequest, $0.StampResponse>(
-      '/egp.EgpService/AddStamp',
+      '/bcrd.BcrdService/AddStamp',
       ($0.StampRequest value) => value.writeToBuffer(),
       ($core.List<$core.int> value) => $0.StampResponse.fromBuffer(value));
   static final _$deleteStamp = $grpc.ClientMethod<$0.StampRequest, $0.StampResponse>(
-      '/egp.EgpService/DeleteStamp',
+      '/bcrd.BcrdService/DeleteStamp',
       ($0.StampRequest value) => value.writeToBuffer(),
       ($core.List<$core.int> value) => $0.StampResponse.fromBuffer(value));
+  static final _$mergeUserStamp = $grpc.ClientMethod<$0.MergeUserStampRequest, $0.MergeUserStampResponse>(
+      '/bcrd.BcrdService/MergeUserStamp',
+      ($0.MergeUserStampRequest value) => value.writeToBuffer(),
+      ($core.List<$core.int> value) => $0.MergeUserStampResponse.fromBuffer(value));
 
-  EgpServiceClient($grpc.ClientChannel channel,
+  BcrdServiceClient($grpc.ClientChannel channel,
       {$grpc.CallOptions? options,
       $core.Iterable<$grpc.ClientInterceptor>? interceptors})
       : super(channel, options: options,
@@ -67,13 +71,17 @@ class EgpServiceClient extends $grpc.Client {
   $grpc.ResponseFuture<$0.StampResponse> deleteStamp($0.StampRequest request, {$grpc.CallOptions? options}) {
     return $createUnaryCall(_$deleteStamp, request, options: options);
   }
+
+  $grpc.ResponseFuture<$0.MergeUserStampResponse> mergeUserStamp($0.MergeUserStampRequest request, {$grpc.CallOptions? options}) {
+    return $createUnaryCall(_$mergeUserStamp, request, options: options);
+  }
 }
 
-@$pb.GrpcServiceName('egp.EgpService')
-abstract class EgpServiceBase extends $grpc.Service {
-  $core.String get $name => 'egp.EgpService';
+@$pb.GrpcServiceName('bcrd.BcrdService')
+abstract class BcrdServiceBase extends $grpc.Service {
+  $core.String get $name => 'bcrd.BcrdService';
 
-  EgpServiceBase() {
+  BcrdServiceBase() {
     $addMethod($grpc.ServiceMethod<$0.ShopsTotalRequest, $0.ShopsTotalResponse>(
         'GetShopsTotal',
         getShopsTotal_Pre,
@@ -109,6 +117,13 @@ abstract class EgpServiceBase extends $grpc.Service {
         false,
         ($core.List<$core.int> value) => $0.StampRequest.fromBuffer(value),
         ($0.StampResponse value) => value.writeToBuffer()));
+    $addMethod($grpc.ServiceMethod<$0.MergeUserStampRequest, $0.MergeUserStampResponse>(
+        'MergeUserStamp',
+        mergeUserStamp_Pre,
+        false,
+        false,
+        ($core.List<$core.int> value) => $0.MergeUserStampRequest.fromBuffer(value),
+        ($0.MergeUserStampResponse value) => value.writeToBuffer()));
   }
 
   $async.Future<$0.ShopsTotalResponse> getShopsTotal_Pre($grpc.ServiceCall call, $async.Future<$0.ShopsTotalRequest> request) async {
@@ -131,9 +146,14 @@ abstract class EgpServiceBase extends $grpc.Service {
     return deleteStamp(call, await request);
   }
 
+  $async.Future<$0.MergeUserStampResponse> mergeUserStamp_Pre($grpc.ServiceCall call, $async.Future<$0.MergeUserStampRequest> request) async {
+    return mergeUserStamp(call, await request);
+  }
+
   $async.Future<$0.ShopsTotalResponse> getShopsTotal($grpc.ServiceCall call, $0.ShopsTotalRequest request);
   $async.Future<$0.ShopsResponse> getShops($grpc.ServiceCall call, $0.ShopsRequest request);
   $async.Future<$0.ShopResponse> getShop($grpc.ServiceCall call, $0.ShopRequest request);
   $async.Future<$0.StampResponse> addStamp($grpc.ServiceCall call, $0.StampRequest request);
   $async.Future<$0.StampResponse> deleteStamp($grpc.ServiceCall call, $0.StampRequest request);
+  $async.Future<$0.MergeUserStampResponse> mergeUserStamp($grpc.ServiceCall call, $0.MergeUserStampRequest request);
 }

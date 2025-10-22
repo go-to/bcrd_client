@@ -2,7 +2,7 @@ import 'dart:ui';
 
 class Config {
   // タイトル
-  static const String appTitle = 'ヱビスビールに合う逸品グランプリ';
+  static const String appTitle = 'バカルディハイボールスタンプラリー in 恵比寿';
 
   // メニュー
   static const String menuLabelShop = '店舗情報';
@@ -13,15 +13,17 @@ class Config {
   static const double defaultMapLatitude = 35.64691938518296;
   static const double defaultMapLongitude = 139.71008179999998;
   static const double defaultMapZoom = 17;
-  static const int locationDistanceFilter = 100;
+  static const int locationDistanceFilter = 50;
+  static const int locationUpdateIntervalMs = 30000; // 30秒間隔
   static const String googleMapStyleJsonPath =
       'assets/jsons/google_map_style.json';
-  static const String shopDefaultImagePath = 'assets/images/shop_default.png';
-  static const String shopOpenImagePath = 'assets/images/shop_open.png';
-  static const String shopSelectedImagePath = 'assets/images/shop_selected.png';
-  static const String isStampedImagePath = 'assets/images/done.png';
-  static const String isStampedSelectedImagePath =
-      'assets/images/done_selected.png';
+  static const String shopDefaultImagePath = 'assets/images/highball.png';
+  static const String shopOpenImagePath = 'assets/images/highball.png';
+  static const String shopSelectedImagePath = 'assets/images/highball.png';
+  static const String isStampedImagePath = 'assets/images/bacardi.png';
+  static const String isStampedSelectedImagePath = 'assets/images/bacardi.png';
+  static const String isStampedSelectedTextImagePath = 'assets/images/done_selected.png';
+  static const String instagramImagePath = 'assets/images/instagram.png';
   static const double shopImageWidth = 50;
   static const double shopImageHeight = 50;
   static const double shopSelectedImageWidth = 80;
@@ -39,6 +41,7 @@ class Config {
   static const String shopCardAttributeAddress = '住所';
   static const String shopCardAttributeBusinessHours = '提供時間';
   static const int customMarkerIconGenerateProcessBatchSize = 100;
+  static const int markerMaxCacheSize = 200;
 
   // ボトムシート
   static const double bottomSheetMinSize = 0.05;
@@ -73,8 +76,6 @@ class Config {
     0: '営業中',
     1: 'スタンプ未獲得',
     2: '不定休',
-    3: '完全予約制',
-    4: 'ビアカクテル部門',
   };
 
   // 並び順
@@ -141,12 +142,12 @@ class Config {
       Color.fromRGBO(220, 150, 150, 0.9); // #dc9696;
   static final Color colorFromRGBODisabled =
       Color.fromRGBO(204, 204, 204, 0.9); // #cccccc
-  static final Color colorFromRGBOBeerDark =
-      Color.fromRGBO(161, 152, 34, 0.9); // #a19822
-  static final Color colorFromRGBOBeer =
-      Color.fromRGBO(255, 215, 64, 0.9); // #ffd740
   static final Color colorFromRGBOWhite =
       Color.fromRGBO(255, 255, 255, 0.9); // #ffffff
+  static final Color colorFromRGBOBcrdBase =
+      Color.fromRGBO(145, 187, 152, 0.9); // #91bb98
+  static final Color colorFromRGBOBcrdDeep =
+      Color.fromRGBO(45, 82, 40, 0.9); // #91bb98
 
   // 文字サイズ
   static final double fontSizeVeryLarge = 36;

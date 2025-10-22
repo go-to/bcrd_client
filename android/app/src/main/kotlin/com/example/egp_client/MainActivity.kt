@@ -1,4 +1,4 @@
-package com.example.egp_client
+package com.example.bcrd_client
 
 import io.flutter.embedding.android.FlutterActivity
 
